@@ -1,0 +1,9 @@
+Added Component: Designator=MECH1(M3 Mounting Hole)
+Added Component: Designator=MECH2(M3 Mounting Hole)
+Added Component: Designator=MECH3(M3 Mounting Hole)
+Added Component: Designator=MECH(M3 Mounting Hole)
+Added Pin To Net: NetName=GND Pin=MECH1-1
+Added Pin To Net: NetName=GND Pin=MECH2-1
+Added Pin To Net: NetName=GND Pin=MECH3-1
+Added Pin To Net: NetName=GND Pin=MECH-1
+Added Class: Name=Top_Level

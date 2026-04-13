@@ -1,0 +1,9 @@
+Removed Pin From Net: NetName=OBC_UHF_TX Pin=J2-A43
+Removed Pin From Net: NetName=OBC_UHF_RX Pin=J2-A45
+Added Pin To Net: NetName=OBC_UHF_RX Pin=J2-A43
+Added Pin To Net: NetName=OBC_UHF_TX Pin=J2-A45
+Added Rule: Name=Schematic Supply Nets_5
+Added Rule: Name=Schematic Supply Nets_16
+Added Rule: Name=Schematic Supply Nets_17
+Added Rule: Name=Schematic Supply Nets_18
+Added Rule: Name=Schematic Supply Nets_19

@@ -1,0 +1,30 @@
+Removed Member From Class: ClassName=Power_Path Member=C6
+Removed Member From Class: ClassName=Power_Path Member=C9
+Removed Member From Class: ClassName=Controller Member=C15
+Removed Member From Class: ClassName=Controller Member=R16
+Removed Member From Class: ClassName=Controller Member=R17
+Added Pin To Net: NetName=+3V3 Pin=R20-2
+Added Member To Class: ClassName=Controller Member=Component C1 C0603C104K5RACTU
+Added Member To Class: ClassName=Controller Member=Component C2 0402B104K250NT
+Added Member To Class: ClassName=Controller Member=Component C3 0402B104K250NT
+Added Member To Class: ClassName=Controller Member=Component C5 CL05B104KB5NNNC
+Added Member To Class: ClassName=Controller Member=Component C7 C0603C104K5RACTU
+Added Member To Class: ClassName=Controller Member=Component C8 C0603C104K5RACTU
+Added Member To Class: ClassName=Controller Member=Component C10 CC0603KRX7R9BB104
+Added Member To Class: ClassName=Power_Path Member=Component C11 CL21B105KBFNNNE_1
+Added Member To Class: ClassName=Power_Path Member=Component C12 CL05B104KB5NNNC
+Added Member To Class: ClassName=Power_Path Member=Component C16 CL05B104KB5NNNC
+Added Member To Class: ClassName=Controller Member=Component D2 NCD0805R1
+Added Member To Class: ClassName=Controller Member=Component R1 0805W8F1002T5E
+Added Member To Class: ClassName=Controller Member=Component R2 RMCF0603FT1K20
+Added Member To Class: ClassName=Controller Member=Component R3 RNCP0805FTD1K00
+Added Member To Class: ClassName=Controller Member=Component R4 RNCP0805FTD1K00
+Added Member To Class: ClassName=Controller Member=Component R6 0603WAF1002T5E
+Added Member To Class: ClassName=Controller Member=Component R7 0603WAF1002T5E
+Added Member To Class: ClassName=Controller Member=Component R10 0805W8F1200T5E
+Added Member To Class: ClassName=Controller Member=Component R11 0805W8F1002T5E
+Added Member To Class: ClassName=Controller Member=Component R12 0603WAF5101T5E
+Added Member To Class: ClassName=Power_Path Member=Component R14 0805W8F1200T5E
+Added Member To Class: ClassName=Controller Member=Component S1 B3U-1000P
+Added Member To Class: ClassName=Controller Member=Component S2 B3U-1000P
+Added Member To Class: ClassName=Controller Member=Component U3 TCAN3414DR
