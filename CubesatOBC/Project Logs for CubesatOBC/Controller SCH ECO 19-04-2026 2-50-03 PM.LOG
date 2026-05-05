@@ -1,0 +1,24 @@
+Removed Parameter Manufacturer:UNI-ROYAL from Part R1
+Removed Parameter Manufacturer:UNI-ROYAL from Part R8
+Removed Parameter Manufacturer:UNI-ROYAL from Part R11
+Change Component Parameter Comment in R1 Old= New=RMCF0805FT10K0
+Change Component Parameter Comment in R8 Old= New=RMCF0805FT10K0
+Change Component Parameter Comment in R11 Old= New=RMCF0805FT10K0
+Change Component Parameter Description in R1 Old=10kOhms 125mW 150V Thick Film Resistor ±1% ±100ppm/? 0805 Chip Resistor - Surface Mount ROHS New=10 kOhms ±1% 0.125W, 1/8W Chip Resistor 0805 (2012 Metric) Automotive AEC-Q200 Thick Film
+Change Component Parameter Description in R11 Old=10kOhms 125mW 150V Thick Film Resistor ±1% ±100ppm/? 0805 Chip Resistor - Surface Mount ROHS New=10 kOhms ±1% 0.125W, 1/8W Chip Resistor 0805 (2012 Metric) Automotive AEC-Q200 Thick Film
+Change Component Parameter Description in R8 Old=10kOhms 125mW 150V Thick Film Resistor ±1% ±100ppm/? 0805 Chip Resistor - Surface Mount ROHS New=10 kOhms ±1% 0.125W, 1/8W Chip Resistor 0805 (2012 Metric) Automotive AEC-Q200 Thick Film
+Change Value of Parameter Distributor Part Number in Part R11 Old=C17414 New=RMCF0805FT10K0CT-ND
+Change Value of Parameter Distributor Part Number in Part R1 Old=C17414 New=RMCF0805FT10K0CT-ND
+Change Value of Parameter Distributor Part Number in Part R8 Old=C17414 New=RMCF0805FT10K0CT-ND
+Change Value of Parameter Distributor in Part R11 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part R8 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part R1 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in R11 Old=0805W8F1002T5E New=RMCF0805FT10K0
+Change Component Parameter Library Reference in R1 Old=0805W8F1002T5E New=RMCF0805FT10K0
+Change Component Parameter Library Reference in R8 Old=0805W8F1002T5E New=RMCF0805FT10K0
+Change Value of Parameter Part Number in Part R8 Old=0805W8F1002T5E New=RMCF0805FT10K0
+Change Value of Parameter Part Number in Part R1 Old=0805W8F1002T5E New=RMCF0805FT10K0
+Change Value of Parameter Part Number in Part R11 Old=0805W8F1002T5E New=RMCF0805FT10K0
+Replace Part R1 RMCF0805FT10K0 in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0805FT10K0 from Ahristi_Library.IntLib
+Replace Part R8 RMCF0805FT10K0 in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0805FT10K0 from Ahristi_Library.IntLib
+Replace Part R11 RMCF0805FT10K0 in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0805FT10K0 from Ahristi_Library.IntLib

@@ -1,0 +1,7 @@
+Change Component Parameter Comment in D2 Old= New=LTST-C171KRKT
+Change Component Parameter Description in D2 Old=LED Red 0805 1.6V~2.6V 130° 195mcd 25mA 615nm~630nm 630nm 65mW New=Red 631nm LED Indication - Discrete 2V 0805 (2012 Metric)
+Change Value of Parameter Distributor Part Number in Part D2 Old=C84256 New=160-1427-1-ND
+Change Value of Parameter Distributor in Part D2 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in D2 Old=NCD0805R1 New=LTST-C171KRKT
+Change Value of Parameter Part Number in Part D2 Old=NCD0805R1 New=LTST-C171KRKT
+Replace Part D2 LTST-C171KRKT in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with LTST-C171KRKT from Ahristi_Library.IntLib

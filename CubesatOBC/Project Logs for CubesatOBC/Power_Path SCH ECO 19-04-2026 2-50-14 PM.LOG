@@ -1,0 +1,8 @@
+Removed Parameter Manufacturer:UNIROYAL from Part R14
+Change Component Parameter Comment in R14 Old= New=RMCF0805FT120R
+Change Component Parameter Description in R14 Old=120Ohm 0805 125mW 150V Thick Film Resistor ±1% ±100ppm/?-55?~+155? New=120 Ohms ±1% 0.125W, 1/8W Chip Resistor 0805 (2012 Metric) Automotive AEC-Q200 Thick Film
+Change Value of Parameter Distributor Part Number in Part R14 Old=C17437 New=738-RMCF0805FT120RCT-ND
+Change Value of Parameter Distributor in Part R14 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in R14 Old=0805W8F1200T5E New=RMCF0805FT120R
+Change Value of Parameter Part Number in Part R14 Old=0805W8F1200T5E New=RMCF0805FT120R
+Replace Part R14 RMCF0805FT120R in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Power_Path.SchDoc with RMCF0805FT120R from Ahristi_Library.IntLib

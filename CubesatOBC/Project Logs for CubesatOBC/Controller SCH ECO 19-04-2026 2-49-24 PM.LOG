@@ -1,0 +1,21 @@
+Change Component Parameter Comment in R6 Old= New=RMCF0603FT10K0
+Change Component Parameter Comment in R7 Old= New=RMCF0603FT10K0
+Change Component Parameter Comment in R20 Old= New=RMCF0603FT10K0
+Change Component Parameter Description in R6 Old=10kOhms ±1% 100mW 0603 Thick Film Resistor New=10 kOhms ±1% 0.1W, 1/10W Chip Resistor 0603 (1608 Metric) Automotive AEC-Q200 Thick Film
+Change Component Parameter Description in R20 Old=10kOhms ±1% 100mW 0603 Thick Film Resistor New=10 kOhms ±1% 0.1W, 1/10W Chip Resistor 0603 (1608 Metric) Automotive AEC-Q200 Thick Film
+Change Component Parameter Description in R7 Old=10kOhms ±1% 100mW 0603 Thick Film Resistor New=10 kOhms ±1% 0.1W, 1/10W Chip Resistor 0603 (1608 Metric) Automotive AEC-Q200 Thick Film
+Change Value of Parameter Distributor Part Number in Part R20 Old=C25804 New=RMCF0603FT10K0CT-ND
+Change Value of Parameter Distributor Part Number in Part R6 Old=C25804 New=RMCF0603FT10K0CT-ND
+Change Value of Parameter Distributor Part Number in Part R7 Old=C25804 New=RMCF0603FT10K0CT-ND
+Change Value of Parameter Distributor in Part R20 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part R7 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part R6 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in R20 Old=0603WAF1002T5E New=RMCF0603FT10K0
+Change Component Parameter Library Reference in R6 Old=0603WAF1002T5E New=RMCF0603FT10K0
+Change Component Parameter Library Reference in R7 Old=0603WAF1002T5E New=RMCF0603FT10K0
+Change Value of Parameter Part Number in Part R7 Old=0603WAF1002T5E New=RMCF0603FT10K0
+Change Value of Parameter Part Number in Part R6 Old=0603WAF1002T5E New=RMCF0603FT10K0
+Change Value of Parameter Part Number in Part R20 Old=0603WAF1002T5E New=RMCF0603FT10K0
+Replace Part R6 RMCF0603FT10K0 in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0603FT10K0 from Ahristi_Library.IntLib
+Replace Part R7 RMCF0603FT10K0 in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0603FT10K0 from Ahristi_Library.IntLib
+Replace Part R20 RMCF0603FT10K0 in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0603FT10K0 from Ahristi_Library.IntLib

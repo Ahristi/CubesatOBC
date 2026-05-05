@@ -1,0 +1,4 @@
+Removed Pin From Net: NetName=SPARE_RX Pin=J2-A46
+Removed Pin From Net: NetName=SPARE_TX Pin=J2-A48
+Added Pin To Net: NetName=SPARE_RX Pin=J2-A48
+Added Pin To Net: NetName=SPARE_TX Pin=J2-A50

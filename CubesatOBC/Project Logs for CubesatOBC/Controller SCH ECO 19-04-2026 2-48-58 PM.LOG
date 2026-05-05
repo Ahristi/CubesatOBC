@@ -1,0 +1,22 @@
+Removed Parameter Dielectric:X7R from Part C2
+Removed Parameter Dielectric:X7R from Part C3
+Removed Parameter Manufacturer:FH from Part C2
+Removed Parameter Manufacturer:FH from Part C3
+Change Value of Parameter Capacitance in Part C2 Old=100nF New=0.1uF
+Change Value of Parameter Capacitance in Part C3 Old=100nF New=0.1uF
+Change Component Parameter Comment in C2 Old= New=CL05B104KB5NNNC
+Change Component Parameter Comment in C3 Old= New=CL05B104KB5NNNC
+Change Component Parameter Description in C2 Old=100nF 25V X7R ±10% 0402 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS New=0.1 µF ±10% 50V Ceramic Capacitor X7R 0402 (1005 Metric)
+Change Component Parameter Description in C3 Old=100nF 25V X7R ±10% 0402 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS New=0.1 µF ±10% 50V Ceramic Capacitor X7R 0402 (1005 Metric)
+Change Value of Parameter Distributor Part Number in Part C2 Old=C56392 New=1276-CL05B104KB5NNNCCT-ND
+Change Value of Parameter Distributor Part Number in Part C3 Old=C56392 New=1276-CL05B104KB5NNNCCT-ND
+Change Value of Parameter Distributor in Part C2 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part C3 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in C2 Old=0402B104K250NT New=CL05B104KB5NNNC
+Change Component Parameter Library Reference in C3 Old=0402B104K250NT New=CL05B104KB5NNNC
+Change Value of Parameter Part Number in Part C2 Old=0402B104K250NT New=CL05B104KB5NNNC
+Change Value of Parameter Part Number in Part C3 Old=0402B104K250NT New=CL05B104KB5NNNC
+Change Value of Parameter Voltage Rating in Part C2 Old=25V New=50V
+Change Value of Parameter Voltage Rating in Part C3 Old=25V New=50V
+Replace Part C2 CL05B104KB5NNNC in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with CL05B104KB5NNNC from Ahristi_Library.IntLib
+Replace Part C3 CL05B104KB5NNNC in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with CL05B104KB5NNNC from Ahristi_Library.IntLib

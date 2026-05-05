@@ -1,0 +1,7 @@
+Change Component Comment : Designator=D4 Old Comment=KT-0805G New Comment=LTST-C171KGKT
+Change component parameters: Designator = "D4" ("D4"); Footprint = "LEDG_0805"; UniqueID = "\VIURHJEG" ("\VIURHJEG")
+Change component parameters (AddParameter): Name = "Colour"; Value = "Green"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Distributor"; Value = "Digikey"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Distributor Part Number"; Value = "160-1426-1-ND"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Operating Temperature"; Value = "-40?~+85?"; VariantName = "[No Variations]"
+Change component parameters (AddParameter): Name = "Part Number"; Value = "LTST-C171KGKT"; VariantName = "[No Variations]"

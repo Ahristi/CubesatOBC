@@ -1,0 +1,4 @@
+Removed Pin From Net: NetName=DEBUG_RX Pin=J3-4
+Removed Pin From Net: NetName=DEBUG_TX Pin=J3-5
+Added Pin To Net: NetName=DEBUG_TX Pin=J3-4
+Added Pin To Net: NetName=DEBUG_RX Pin=J3-5

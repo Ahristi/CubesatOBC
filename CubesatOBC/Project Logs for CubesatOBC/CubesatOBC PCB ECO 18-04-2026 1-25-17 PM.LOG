@@ -1,0 +1,19 @@
+Removed Pin From Net: NetName=SD_DETECT Pin=U1-54
+Added Component: Designator=J3(0532610671)
+Add component (AddParameter): Name = "Contact Current (Max)"; Value = "1A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Distributor"; Value = "Digikey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Distributor Part Number"; Value = "WM7624CT-ND"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Material Flammability Rating"; Value = "UL94 V-0"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Positions"; Value = "6"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Part Number"; Value = "0532610671"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=CANH Pin=J3-2
+Added Pin To Net: NetName=CANL Pin=J3-3
+Added Pin To Net: NetName=GND Pin=J3-6
+Added Pin To Net: NetName=SD_DETECT Pin=U1-47
+Added Pin To Net: NetName=DEBUG_RX Pin=J3-4
+Added Pin To Net: NetName=DEBUG_RX Pin=U1-56
+Added Net: Name=DEBUG_RX
+Added Pin To Net: NetName=DEBUG_TX Pin=J3-5
+Added Pin To Net: NetName=DEBUG_TX Pin=U1-54
+Added Net: Name=DEBUG_TX
+Added Member To Class: ClassName=Controller Member=Component J3 0532610671

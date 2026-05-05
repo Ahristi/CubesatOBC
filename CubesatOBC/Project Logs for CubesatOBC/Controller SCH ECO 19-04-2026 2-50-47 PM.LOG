@@ -1,0 +1,8 @@
+Change Component Parameter Comment in C4 Old= New=CL21B105KAFNNNE
+Change Component Parameter Description in C4 Old=1uF ±10% 50V Ceramic Capacitor X7R 0805 (2012 Metric) New=1uF ±10% 25V Ceramic Capacitor X7R 0805 (2012 Metric)
+Change Value of Parameter Distributor Part Number in Part C4 Old=C28323 New=1276-1066-1-ND
+Change Value of Parameter Distributor in Part C4 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in C4 Old=CL21B105KBFNNNE New=CL21B105KAFNNNE
+Change Value of Parameter Part Number in Part C4 Old=CL21B105KBFNNNE New=CL21B105KAFNNNE
+Change Value of Parameter Voltage Rating in Part C4 Old=50V New=25V
+Replace Part C4 CL21B105KAFNNNE in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with CL21B105KAFNNNE from Ahristi_Library.IntLib

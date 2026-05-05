@@ -1,0 +1,16 @@
+Removed Parameter Manufacturer:UNIROYAL from Part R9
+Removed Parameter Manufacturer:UNIROYAL from Part R10
+Change Component Parameter Comment in R9 Old= New=RMCF0805FT120R
+Change Component Parameter Comment in R10 Old= New=RMCF0805FT120R
+Change Component Parameter Description in R9 Old=120Ohm 0805 125mW 150V Thick Film Resistor ±1% ±100ppm/?-55?~+155? New=120 Ohms ±1% 0.125W, 1/8W Chip Resistor 0805 (2012 Metric) Automotive AEC-Q200 Thick Film
+Change Component Parameter Description in R10 Old=120Ohm 0805 125mW 150V Thick Film Resistor ±1% ±100ppm/?-55?~+155? New=120 Ohms ±1% 0.125W, 1/8W Chip Resistor 0805 (2012 Metric) Automotive AEC-Q200 Thick Film
+Change Value of Parameter Distributor Part Number in Part R9 Old=C17437 New=738-RMCF0805FT120RCT-ND
+Change Value of Parameter Distributor Part Number in Part R10 Old=C17437 New=738-RMCF0805FT120RCT-ND
+Change Value of Parameter Distributor in Part R10 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part R9 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in R9 Old=0805W8F1200T5E New=RMCF0805FT120R
+Change Component Parameter Library Reference in R10 Old=0805W8F1200T5E New=RMCF0805FT120R
+Change Value of Parameter Part Number in Part R10 Old=0805W8F1200T5E New=RMCF0805FT120R
+Change Value of Parameter Part Number in Part R9 Old=0805W8F1200T5E New=RMCF0805FT120R
+Replace Part R9 RMCF0805FT120R in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0805FT120R from Ahristi_Library.IntLib
+Replace Part R10 RMCF0805FT120R in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with RMCF0805FT120R from Ahristi_Library.IntLib

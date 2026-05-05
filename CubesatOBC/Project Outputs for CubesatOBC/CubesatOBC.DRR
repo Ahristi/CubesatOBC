@@ -1,0 +1,22 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: CubesatOBC.PcbDoc   18/04/2026  2:47:25 PM
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer (SIG) to Bottom Layer (SIG)
+ASCII RoundHoles File : CubesatOBC-RoundHoles.TXT
+ASCII SlotHoles File : CubesatOBC-SlotHoles.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.3mm (12mil)                                             Round             191       PTH        907.81mm (35.74inch)
+T2      0.6mm (24mil)                                             Slot              4         PTH        46.03mm (1.81inch)
+T3      0.89mm (35mil)                                            Round             104       PTH        389.57mm (15.34inch)
+T4      3.2mm (126mil)                                            Round             4         PTH        239.43mm (9.43inch)
+T5      3.5mm (138mil)                                            Round             1         PTH        0.00mm (0.00inch)
+T6      0.65mm (26mil)                                            Round             2         NPTH       5.78mm (0.23inch)
+T7      1.1mm (43mil)                                             Round             1         NPTH       0.00mm (0.00inch)
+T8      1.6mm (63mil)                                             Round             1         NPTH       0.00mm (0.00inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              308
+
+Total Processing Time (hh:mm:ss) : 00:00:00

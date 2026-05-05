@@ -1,0 +1,16 @@
+Removed Parameter Dielectric:X7R from Part C9
+Removed Parameter Dielectric:X7R from Part C10
+Change Component Parameter Comment in C9 Old= New=C0603C104K5RACTU
+Change Component Parameter Comment in C10 Old= New=C0603C104K5RACTU
+Change Component Parameter Description in C9 Old=100nF 50V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS New=0.1 µF ±10% 50V Ceramic Capacitor X7R 0603 (1608 Metric)
+Change Component Parameter Description in C10 Old=100nF 50V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS New=0.1 µF ±10% 50V Ceramic Capacitor X7R 0603 (1608 Metric)
+Change Value of Parameter Distributor Part number in Part C9 Old=C14663 New=399-C0603C104K5RACTUCT-ND
+Change Value of Parameter Distributor Part number in Part C10 Old=C14663 New=399-C0603C104K5RACTUCT-ND
+Change Value of Parameter Distributor in Part C9 Old=JLCPCB New=Digikey
+Change Value of Parameter Distributor in Part C10 Old=JLCPCB New=Digikey
+Change Component Parameter Library Reference in C9 Old=CC0603KRX7R9BB104 New=C0603C104K5RACTU
+Change Component Parameter Library Reference in C10 Old=CC0603KRX7R9BB104 New=C0603C104K5RACTU
+Change Value of Parameter Part Number in Part C9 Old=CC0603KRX7R9BB104 New=C0603C104K5RACTU
+Change Value of Parameter Part Number in Part C10 Old=CC0603KRX7R9BB104 New=C0603C104K5RACTU
+Replace Part C9 C0603C104K5RACTU in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with C0603C104K5RACTU from Ahristi_Library.IntLib
+Replace Part C10 C0603C104K5RACTU in C:\Users\Tom\Documents\CubesatOBC\CubesatOBC\Controller.SchDoc with C0603C104K5RACTU from Ahristi_Library.IntLib
