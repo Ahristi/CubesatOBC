@@ -1,17 +1,24 @@
 #include <Arduino.h>
+#include <SPI.h>
+#include <SD.h>
+#include <Wire.h>
+#include "scheduler.h"
 
 
-int myFunction(int, int);
+
 
 void setup() {
-  int result = myFunction(2, 3);
+
+    //Begin Peripherals
+    Serial.begin(115200);
+    Wire.begin();
+    SPI.begin();
+    
+    LOGGING_Init();
+    Scheduler_init();
 }
 
-void loop() {
-
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void loop()
+{
+    Scheduler_run();
 }

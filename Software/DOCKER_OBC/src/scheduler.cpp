@@ -8,10 +8,10 @@ void LOGGING_task();
 
 
 Task tasks[] = {
-    {COMMS_task,     10, 0},
+    {COMMS_task,    200, 0},
     {EPS_task,     1000, 0},
-    {ADCS_task,     100, 0},
-    {PAYLOAD_task,  200, 0},
+    {ADCS_task,     200, 0},
+    {PAYLOAD_task, 1000, 0},
     {LOGGING_task, 1000, 0},   
 };
 static constexpr uint8_t NUM_TASKS = sizeof(tasks) / sizeof(tasks[0]);
