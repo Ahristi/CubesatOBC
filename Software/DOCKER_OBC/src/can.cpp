@@ -1,5 +1,5 @@
 #include "can.h"
-FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> Can0;
+FlexCAN_T4<CAN3, RX_SIZE_1024, TX_SIZE_16> Can0;
 
 
 void CAN_Init()
@@ -18,6 +18,17 @@ void CAN_Init()
     Can0.setMB(MB0, RX, STD);
     Can0.setMB(MB1, RX, STD);
     Can0.setMB(MB2, RX, STD);
+    Can0.setMB(MB3, RX, STD);
+    Can0.setMB(MB4, RX, STD);
+    Can0.setMB(MB5, RX, STD);
+
+    Can0.setMBFilter(MB0, EPS_3V3_TELEMETRY_ID);
+    Can0.setMBFilter(MB1, EPS_5V_TELEMETRY_ID);
+    Can0.setMBFilter(MB2, EPS_6V_TELEMETRY_ID);
+    Can0.setMBFilter(MB3, EPS_12V_TELEMETRY_ID);
+    Can0.setMBFilter(MB4, EPS_BMS_TELEMETRY_ID);
+    Can0.setMBFilter(MB5, EPS_SYS_TELEMETRY_ID);
+
 
     // Configure TX mailboxes
     Can0.setMB(MB8, TX, STD);

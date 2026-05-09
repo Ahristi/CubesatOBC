@@ -10,7 +10,7 @@ void SYSTEM_task();
 
 Task tasks[] = {
     {COMMS_task,    200, 0},
-    {EPS_task,      20, 0},
+    {EPS_task,        5, 0},
     {ADCS_task,     200, 0},
     {PAYLOAD_task, 1000, 0},
     {LOGGING_task, 1000, 0},

@@ -1,6 +1,11 @@
 #include "eps.h"
 #include <Arduino.h>
 
+EPS_Handler_t heps;
+void EPS_Init(void)
+{
+    return;
+}
 void EPS_task()
 {
     CAN_message_t rxFrame;
@@ -29,7 +34,11 @@ void EPS_task()
             break;
         }
     }
-    
+    if (heps.eFuse_msg_ready)
+    {
+        heps.eFuse_msg_ready = false;
+        EPS_updateEfuses();
+    }
 }
 
 void EPS_RailTelemHandle(RailTelemetry_t* railTelem, uint8_t* buf, uint8_t len)
@@ -73,6 +82,14 @@ void EPS_SYSTelemHandle(uint8_t* buf, uint8_t len)
         EPS_telemetry.mcu_temp         = buf[2];
     }
 }
+void EPS_updateEfuses(void)
+{
+    uint8_t ID = EPS_EFUSE_CONTROL_CMD_ID;
+    uint8_t data[1] = {heps.eFuse_states};
+    CAN_send(ID, data, 1);
+}
+
+
 
 void EPS_printRailTelemetry(const char* name, const RailTelemetry_t* rail)
 {
@@ -86,6 +103,8 @@ void EPS_printRailTelemetry(const char* name, const RailTelemetry_t* rail)
     Serial.print(" | I2=");
     Serial.println(rail->current_ch2);
 }
+
+
 
 
 void EPS_debugPrint(void)
@@ -157,4 +176,12 @@ void EPS_debugPrint(void)
     Serial.println("===================================");
 }
 
+void EPS_enableEFuse(EPS_EFuse_t efuse)
+{
+    heps.eFuse_states |= (uint8_t)efuse;
+}
 
+void EPS_disableEFuse(EPS_EFuse_t efuse)
+{
+    heps.eFuse_states &= ~(uint8_t)efuse;
+}

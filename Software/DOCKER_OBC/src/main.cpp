@@ -6,6 +6,8 @@
 
 #include "scheduler.h"
 #include "can.h"
+#include "adcs.h"
+#include "eps.h"
 #include "system.h"
 
 
@@ -19,6 +21,8 @@ void setup() {
     CAN_Init();
     LOGGING_Init();
     Scheduler_init();
+    EPS_Init();
+    ADCS_Init();
     SYSTEM_Init();
 }
 
