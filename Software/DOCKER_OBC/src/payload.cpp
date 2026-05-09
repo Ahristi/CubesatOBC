@@ -3,6 +3,5 @@
 
 void PAYLOAD_task()
 {
-    Serial.println("Executing Payload Task");
     return;
 }

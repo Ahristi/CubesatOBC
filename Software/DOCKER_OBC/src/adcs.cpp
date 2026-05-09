@@ -3,6 +3,5 @@
 
 void ADCS_task()
 {
-    Serial.println("Executing ADCS Task");
     return;
 }

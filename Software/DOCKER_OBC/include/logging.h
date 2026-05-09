@@ -30,16 +30,22 @@ typedef struct{
     RailTelemetry_t rail_6v;
     RailTelemetry_t rail_12v;
 
-    uint16_t mcu_temp;    
+
     uint16_t battery_voltage;
+    uint16_t sys_voltage;
     uint16_t battery_current;
-    uint16_t battery_temp;
+    uint8_t battery_temp;
+
+    uint16_t mcu_temp;
+    uint8_t  charger_die_temp;
 
     uint16_t mppt1_voltage;
     uint16_t mppt2_voltage;
     uint16_t mppt1_current;
     uint16_t mppt2_current;
 
+    uint8_t eFuse_states;
+    uint8_t eFuse_faults;
 }LOGGING_EPSTelemetry_t;
 
 typedef struct{
@@ -77,7 +83,13 @@ typedef struct
 
 
 //-------------Variables-------------
+extern LOGGING_EPSTelemetry_t EPS_telemetry;
+extern LOGGING_ADCSTelemetry_t ADCS_telemetry;
+extern LOGGING_faults_t satellite_faults;
+extern RTC_Time_t RTC_time;
 
+
+//-------------Function Prototypes-------------
 void LOGGING_Init();
 void LOGGING_task();
 bool LOGGING_getTime(RTC_Time_t *time);

@@ -5,15 +5,20 @@ void EPS_task();
 void ADCS_task();
 void PAYLOAD_task();
 void LOGGING_task();
+void SYSTEM_task();
 
 
 Task tasks[] = {
     {COMMS_task,    200, 0},
-    {EPS_task,     1000, 0},
+    {EPS_task,      20, 0},
     {ADCS_task,     200, 0},
     {PAYLOAD_task, 1000, 0},
-    {LOGGING_task, 1000, 0},   
+    {LOGGING_task, 1000, 0},
+    {SYSTEM_task,   100, 0},
 };
+
+
+
 static constexpr uint8_t NUM_TASKS = sizeof(tasks) / sizeof(tasks[0]);
 
 void Scheduler_init()
