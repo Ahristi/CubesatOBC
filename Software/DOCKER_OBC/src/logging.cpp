@@ -37,7 +37,7 @@ void LOGGING_Init()
 bool LOGGING_getTime(RTC_Time_t *time)
 {
     Wire.beginTransmission(RV3028_ADDR);
-    Wire.write(0x00); // Start at seconds register
+    Wire.write(0x00); 
 
     if (Wire.endTransmission(false) != 0)
     {
