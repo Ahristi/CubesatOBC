@@ -16,6 +16,7 @@ void SYSTEM_task(void)
     SYSTEM_heartbeat();
     SYSTEM_watchdog();
     SYSTEM_stateMachine();
+    
     //Debug
     EPS_debugPrint();
     //SYSTEM_debugPrint();
