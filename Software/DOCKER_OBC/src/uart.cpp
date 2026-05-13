@@ -1,14 +1,12 @@
 #include "uart.h"
 
 
-bool UART_getMessage(Stream *port, UART_msg_t* msg)
+bool UART_receive(Stream *port, UART_msg_t* msg)
 {
     UART_rx_state_t state = UART_RX_WAIT_SOF;
     uint8_t byte;
     uint8_t idx = 0;
     uint8_t crc_idx = 0;
-
-
     while (port->available())
     {   
         byte = port->read();
@@ -19,7 +17,10 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
                 if (byte == UART_SOF)
                 {
                     Serial.println("UART SOF received");
+                    memset(msg, 0, sizeof(UART_msg_t));   
                     msg->sof = byte;
+                    idx = 0;
+                    crc_idx = 0;
                     state = UART_RX_GET_ID;
                 }
                 break;
@@ -39,29 +40,27 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
                 }
                 Serial.println("UART length received");
                 state = UART_RX_READ_PAYLOAD;
+                break;
             }
             case UART_RX_READ_PAYLOAD:
             {
                 msg->payload[idx++] = byte;
                 if (idx >= msg->length)
                 {
-                    state = UART_RX_WAIT_SOF;
+                    state = UART_RX_READ_CRC;
                 }
                 break;
             }
             case UART_RX_READ_CRC:
             {
-                msg->crc |= (byte << crc_idx);
+                
+                msg->crc |= ((uint16_t)byte << (8 * crc_idx));
                 crc_idx++;
                 if (crc_idx == RX_CRC_BYTES)
                 {
-                    state = UART_RX_CHECK_CRC;
+                    return UART_checkCRC(msg);
                 }
                 break;
-            }
-            case UART_RX_CHECK_CRC:
-            {
-                return  UART_checkCRC(msg);
             }
             default:
             {
@@ -72,6 +71,12 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
     }
     return false;
 }
+void UART_transmit(Stream *port, UART_msg_t* msg)
+{
+
+}
+
+
 
 bool UART_checkCRC(UART_msg_t* msg)
 {
@@ -107,3 +112,4 @@ uint16_t UART_crc16_ccitt(const uint8_t *data, uint16_t length)
     }
     return crc;
 }
+

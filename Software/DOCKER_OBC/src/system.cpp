@@ -20,7 +20,7 @@ void SYSTEM_task(void)
     //Debug
     //EPS_debugPrint();
     //SYSTEM_debugPrint();
-    ADCS_debugPrint();
+    //ADCS_debugPrint();
 }
 
 

@@ -18,60 +18,10 @@ void ADCS_task(void)
 
 void ADCS_getTelemetry(void)
 {
-    ADCS_rx_state_t state = ADCS_RX_WAIT_SOF;
-    uint8_t byte;
-    uint8_t idx;
-    uint8_t packet_len;
-    uint8_t id;
-    uint8_t packet[ADCS_RX_BUFFER_LEN];
-
-    while (Serial1.available())
+    UART_msg_t msg;
+    if (UART_receive(&Serial1, &msg))
     {
-        
-        byte = Serial1.read();
-        switch (state)
-        {
-            case ADCS_RX_WAIT_SOF:
-            {
-                if (byte == ADCS_SOF)
-                {
-                    Serial.println("ADCS SOF received");
-                    packet[0] = byte;
-                    idx = 1;
-                    state = ADCS_RX_GET_ID;
-                }
-                break;
-            }
-            case ADCS_RX_GET_ID:
-            {
-                id = byte;
-                packet[1] = id;
-                idx = 2;
-                packet_len = 2 + ADCS_getRxPayloadLength(id) + ADCS_RX_CRC_BYTES; //SOF+ID+PAYLOAD+CRC
-                if (packet_len == 0 || packet_len > ADCS_RX_BUFFER_LEN)
-                {
-                    state = ADCS_RX_WAIT_SOF;
-                    break;
-                }
-                state = ADCS_RX_READ_PAYLOAD;
-                break;
-            }
-            case ADCS_RX_READ_PAYLOAD:
-            {
-                packet[idx++] = byte;
-                if (idx >= packet_len)
-                {
-                    state = ADCS_RX_WAIT_SOF;
-                    ADCS_processPacket(id, packet, idx);
-                }
-                break;
-            }
-            default:
-            {
-                state = ADCS_RX_WAIT_SOF;
-                break;
-            }
-        }
+        Serial.println("ADCS Message Received!");
     }
 }
 

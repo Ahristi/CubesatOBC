@@ -34,10 +34,11 @@ def crc16_ccitt(data: bytes) -> int:
     return crc
 
 def build_packet(packet_type: int, payload: bytes = b"") -> bytes:
-    header = SYNC + bytes([packet_type])
+    if len(payload) > 255:
+        raise ValueError("Payload too long for uint8_t length field")
+    header = SYNC + bytes([packet_type, len(payload)])
     crc = crc16_ccitt(header + payload)
     return header + payload + struct.pack("<H", crc)
-
 
 def send_packet(ser: serial.Serial, packet_type: int, payload: bytes = b""):
     ser.write(build_packet(packet_type, payload))
@@ -80,7 +81,7 @@ def main():
         default="COM8",
         help="FTDI serial port, e.g. COM8 or /dev/ttyUSB0"
     )
-    parser.add_argument("--baud", type=int, default=115200)
+    parser.add_argument("--baud", type=int, default=3000000)
     args = parser.parse_args()
 
     with serial.Serial(args.port, args.baud, timeout=0.02) as ser:
