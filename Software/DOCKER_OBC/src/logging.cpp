@@ -69,18 +69,17 @@ bool LOGGING_getTime(RTC_Time_t *time)
 
 void LOGGING_task()
 {
-    RTC_Time_t rtc_time;
 
-    if (LOGGING_getTime(&rtc_time))
+    if (LOGGING_getTime(&RTC_time))
     {
         Serial.printf(
             "%04u-%02u-%02u %02u:%02u:%02u UTC\n",
-            rtc_time.year,
-            rtc_time.month,
-            rtc_time.day,
-            rtc_time.hours,
-            rtc_time.minutes,
-            rtc_time.seconds
+            RTC_time.year,
+            RTC_time.month,
+            RTC_time.day,
+            RTC_time.hours,
+            RTC_time.minutes,
+            RTC_time.seconds
         );
     }
 
@@ -92,9 +91,9 @@ void LOGGING_task()
     char filename[32];
     snprintf(filename, sizeof(filename),
              "/%04u%02u%02u.csv",
-             rtc_time.year,
-             rtc_time.month,
-             rtc_time.day);
+             RTC_time.year,
+             RTC_time.month,
+             RTC_time.day);
     File file = SD.open(filename, FILE_WRITE);
     if (!file)
     {
@@ -115,12 +114,12 @@ void LOGGING_task()
             "%d,%d,%d,"
             "%d,%d,%d,"
             "0x%04X\n",
-        rtc_time.year,
-        rtc_time.month,
-        rtc_time.day,
-        rtc_time.hours,
-        rtc_time.minutes,
-        rtc_time.seconds,
+        RTC_time.year,
+        RTC_time.month,
+        RTC_time.day,
+        RTC_time.hours,
+        RTC_time.minutes,
+        RTC_time.seconds,
         EPS_telemetry.rail_3v3.voltage,
         EPS_telemetry.rail_3v3.current_ch1,
         EPS_telemetry.rail_3v3.current_ch2,
@@ -151,7 +150,7 @@ void LOGGING_task()
         ADCS_telemetry.yaw,
         ADCS_telemetry.x_rw_speed,
         ADCS_telemetry.y_rw_speed,
-        ADCS_telemetry.z_rw_sped,
+        ADCS_telemetry.z_rw_speed,
         ADCS_telemetry.x_mag_current,
         ADCS_telemetry.y_mag_current,
         ADCS_telemetry.z_mag_current,

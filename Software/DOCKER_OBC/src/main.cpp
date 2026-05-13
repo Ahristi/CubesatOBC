@@ -8,6 +8,7 @@
 #include "can.h"
 #include "adcs.h"
 #include "eps.h"
+#include "comms.h"
 #include "system.h"
 
 
@@ -19,6 +20,7 @@ void setup() {
     SPI.begin();
 
     CAN_Init();
+    COMMS_Init();
     LOGGING_Init();
     Scheduler_init();
     EPS_Init();

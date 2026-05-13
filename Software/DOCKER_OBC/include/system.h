@@ -4,6 +4,7 @@
 #include "can.h"
 #include "eps.h"
 #include "adcs.h"
+#include "comms.h"
 #include "logging.h"
 #include "math.h"
 //-------------Defines-------------

@@ -86,11 +86,11 @@ void UART_transmit(Stream *port, UART_msg_t* msg)
     memcpy(&data[RX_HEADER_BYTES], msg->payload, msg->length);
     msg->crc = UART_crc16_ccitt(data, msg->length + RX_HEADER_BYTES);
     uint8_t crc_offset = RX_HEADER_BYTES + msg->length;
-
     data[crc_offset]     = msg->crc & 0xFF;
     data[crc_offset + 1] = msg->crc >> 8;
 
     port->write(data, msg->length + RX_HEADER_BYTES + RX_CRC_BYTES);
+
 }
 
 

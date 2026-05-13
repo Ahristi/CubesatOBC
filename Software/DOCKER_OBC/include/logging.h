@@ -54,7 +54,7 @@ typedef struct{
     uint16_t yaw;
     uint16_t x_rw_speed;
     uint16_t y_rw_speed;
-    uint16_t z_rw_sped;
+    uint16_t z_rw_speed;
 
     uint16_t x_mag_current;
     uint16_t y_mag_current;
