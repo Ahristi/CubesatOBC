@@ -90,3 +90,58 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->Payload_Faults        = satellite_faults.Payload_Faults;
     data->Comms_Faults          = satellite_faults.Comms_Faults;
 }
+
+void COMMS_downLinkHandler(void)
+{
+    switch (hcomms.downlink_state)
+    {
+        case DOWNLINK_IDLE:
+        {
+            break;
+        }
+        case DOWNLINK_SEND_INFO:
+        {
+            COMMS_sendFileInfo();
+            break;
+        }
+        case DOWNLINK_SEND_CHUNK:
+        {
+            COMMS_sendNextFileChunk();
+            break;
+        }
+        case DOWNLINK_WAIT_ACK:
+        {
+            if (COMMS_getAck())
+            {
+                hcomms.ack_retries    = 0;
+                hcomms.downlink_state = DOWNLINK_SEND_CHUNK;
+            }
+            else
+            {
+                hcomms.ack_retries++;
+                if (hcomms.ack_retries >= MAX_ACK_RETRIES)
+                {
+                    hcomms.ack_retries    = 0;
+                    hcomms.downlink_ready = 0;
+                    hcomms.downlink_state = DOWNLINK_ERROR;
+                }
+            }
+            break;
+        }
+        case DOWNLINK_COMPLETE:
+        {
+            COMMS_sendEndFile();
+            break;
+        }
+        case DOWNLINK_ERROR:
+        {
+            break;
+        }
+        default:
+        {
+            hcomms.downlink_state = DOWNLINK_IDLE;
+            break;
+        }
+            
+    }
+}

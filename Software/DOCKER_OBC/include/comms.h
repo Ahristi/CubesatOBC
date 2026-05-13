@@ -18,14 +18,14 @@
 #define BEACON_MSG_ID   0x65
 #define BEACON_MSG_DATA_BYTES  72
 
+#define MAX_ACK_RETRIES 3
 
 
 
 //-------------Typedefs and Enums--------------
 
-typedef struct{
-    uint32_t beacon_tick;
-}COMMS_Handler_t;
+
+
 
 
 typedef struct __attribute__((packed)) {
@@ -46,15 +46,15 @@ typedef struct __attribute__((packed)) {
     uint16_t battery_voltage;
     uint16_t sys_voltage;
     uint16_t battery_current;
-    uint8_t battery_temp;
+    uint8_t  battery_temp;
     uint16_t mcu_temp;
     uint8_t  charger_die_temp;
     uint16_t mppt1_voltage;
     uint16_t mppt2_voltage;
     uint16_t mppt1_current;
     uint16_t mppt2_current;
-    uint8_t eFuse_states;
-    uint8_t eFuse_faults;
+    uint8_t  eFuse_states;
+    uint8_t  eFuse_faults;
     uint16_t roll;
     uint16_t pitch;
     uint16_t yaw;
@@ -73,6 +73,27 @@ typedef struct __attribute__((packed)) {
 
 
 
+typedef enum {
+    DOWNLINK_IDLE,
+    DOWNLINK_SEND_INFO,
+    DOWNLINK_SEND_CHUNK,
+    DOWNLINK_WAIT_ACK,
+    DOWNLINK_COMPLETE,
+    DOWNLINK_ERROR
+}COMMS_downlinkState_t;
+
+typedef struct{
+    uint32_t beacon_tick;
+    uint16_t file_packets;
+    uint16_t packet_idx;
+    
+    COMMS_downlinkState_t downlink_state;
+    uint8_t ack_retries;
+    bool file_open;
+    bool downlink_ready;
+}COMMS_Handler_t;
+
+
 extern COMMS_Handler_t hcomms;
 
 
@@ -81,5 +102,10 @@ void COMMS_Init(void);
 void COMMS_task(void);
 void COMMS_sendBeacon(void);
 void COMMS_packBeacon(COMMS_BeaconData_t* data);
-
+void COMMS_downLinkHandler(void);
+void COMMS_startDownlink(const char *filename, uint16_t file_id);
+void COMMS_sendFileInfo();
+void COMMS_sendNextFileChunk();
+bool COMMS_getAck();
+void COMMS_sendEndFile();
 #endif
