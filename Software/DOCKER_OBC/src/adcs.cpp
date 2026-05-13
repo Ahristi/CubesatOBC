@@ -213,7 +213,7 @@ void ADCS_debugPrint(void)
     Serial.println("==========================");
 }
 
-uint16_t crc16_ccitt(const uint8_t *data, uint16_t length)
+uint16_t UART_crc16_ccitt(const uint8_t *data, uint16_t length)
 {
     uint16_t crc = 0xFFFF;
 
@@ -233,6 +233,5 @@ uint16_t crc16_ccitt(const uint8_t *data, uint16_t length)
             }
         }
     }
-
     return crc;
 }
