@@ -6,6 +6,10 @@ ADCS_Handler_t hadcs;
 void ADCS_Init(void)
 {
     hadcs.detumble_scale = DETUMBLE_SCALE_START;
+    hadcs.attitude_command_ready   = false;
+    hadcs.orbital_parameters_ready = false;
+    hadcs.detumble_command_ready   = false;
+    hadcs.pointing_command_ready   = false;
     Serial1.begin(ADCS_BAUDRATE);
     Serial.println("ADCS UART initialised on Serial4");
 }
@@ -13,6 +17,8 @@ void ADCS_Init(void)
 void ADCS_task(void)
 {
     ADCS_getTelemetry();
+    ADCS_updateAttitude();
+    ADCS_updateOrbitalParameters();
     return;
 }
 
@@ -22,62 +28,40 @@ void ADCS_getTelemetry(void)
     if (UART_receive(&Serial1, &msg))
     {
         Serial.println("ADCS Message Received!");
+        ADCS_processPacket(msg.id, msg.payload, msg.length);
     }
 }
 
-void ADCS_processPacket(uint8_t id, uint8_t *packet, uint8_t packet_len)
+void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
 {
-    uint8_t payload_len = ADCS_getRxPayloadLength(id);
-    uint8_t expected_len = 2 + payload_len + ADCS_RX_CRC_BYTES;
-
-    if (packet_len != expected_len)
+    uint8_t expected_length = ADCS_getRxPayloadLength(id);
+    if (payload_length != expected_length)
     {
         Serial.print("Bad ADCS packet length. RX=");
-        Serial.print(packet_len);
+        Serial.print(payload_length);
         Serial.print(" Expected=");
-        Serial.println(expected_len);
+        Serial.println(expected_length);
         return;
     }
-
-    uint16_t calc_crc = crc16_ccitt(packet, 2 + payload_len);
-    uint16_t rx_crc =
-        ((uint16_t)packet[2 + payload_len]) |
-        ((uint16_t)packet[2 + payload_len + 1] << 8);
-
-    if (rx_crc != calc_crc)
-    {
-        Serial.print("CRC Failed. RX=0x");
-        Serial.print(rx_crc, HEX);
-        Serial.print(" CALC=0x");
-        Serial.println(calc_crc, HEX);
-        return;
-    }
-
-    Serial.println("CRC Passed!");
-
     if (id == ADCS_PACKET_TELEMETRY)
     {
-        uint8_t *payload = &packet[2];
+        hadcs.roll      = payload[0];
+        hadcs.pitch     = payload[1];
+        hadcs.yaw       = payload[2];
 
-        float *f = (float *)payload;
+        hadcs.roll_dot  = payload[3];
+        hadcs.pitch_dot = payload[4];
+        hadcs.yaw_dot   = payload[5];
 
-        hadcs.roll      = f[0];
-        hadcs.pitch     = f[1];
-        hadcs.yaw       = f[2];
+        hadcs.rw1       = payload[6];
+        hadcs.rw2       = payload[7];
+        hadcs.rw3       = payload[8];
 
-        hadcs.roll_dot  = f[3];
-        hadcs.pitch_dot = f[4];
-        hadcs.yaw_dot   = f[5];
+        hadcs.it1       = payload[9];
+        hadcs.it2       = payload[10];
+        hadcs.it3       = payload[11];
 
-        hadcs.rw1       = f[6];
-        hadcs.rw2       = f[7];
-        hadcs.rw3       = f[8];
-
-        hadcs.it1       = f[9];
-        hadcs.it2       = f[10];
-        hadcs.it3       = f[11];
-
-        hadcs.detumble_scale = f[12];
+        hadcs.detumble_scale = payload[12];
 
         Serial.println("ADCS telemetry updated");
     }
@@ -97,6 +81,32 @@ uint8_t ADCS_getRxPayloadLength(uint8_t id)
             return 0;
     } 
 }
+void ADCS_updateAttitude(void)
+{
+    if (hadcs.attitude_command_ready)
+    {
+        UART_msg_t msg;
+        hadcs.attitude_command_ready =  false;
+        msg.sof    = UART_SOF;
+        msg.id     = ADCS_ATTITUDE_UPDATE_ID;
+        msg.length = ADCS_ATTITUDE_UPDATE_BYTES;
+        UART_transmit(&Serial1, &msg);
+    }
+}
+void ADCS_updateOrbitalParameters(void)
+{
+    if (hadcs.orbital_parameters_ready)
+    {
+        UART_msg_t msg;
+        hadcs.orbital_parameters_ready =  false;
+        msg.sof    = UART_SOF;
+        msg.id     = ADCS_ORBIT_UPDATE_ID;
+        msg.length = ADCS_ORBIT_UPDATE_BYTES;
+        UART_transmit(&Serial1, &msg);
+    }
+}
+
+
 void ADCS_debugPrint(void)
 {
     Serial.println("========== ADCS ==========");
@@ -161,27 +171,4 @@ void ADCS_debugPrint(void)
     Serial.println(hadcs.pointing_command_ready ? "TRUE" : "FALSE");
 
     Serial.println("==========================");
-}
-
-uint16_t crc16_ccitt(const uint8_t *data, uint16_t length)
-{
-    uint16_t crc = 0xFFFF;
-
-    for (uint16_t i = 0; i < length; i++)
-    {
-        crc ^= ((uint16_t)data[i] << 8);
-
-        for (uint8_t j = 0; j < 8; j++)
-        {
-            if (crc & 0x8000)
-            {
-                crc = (crc << 1) ^ 0x1021;
-            }
-            else
-            {
-                crc <<= 1;
-            }
-        }
-    }
-    return crc;
 }

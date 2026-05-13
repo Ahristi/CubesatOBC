@@ -18,18 +18,55 @@
 #define ADCS_PACKET_TELEMETRY 0x80
 #define ADCS_PACKET_ACK       0xF0
 #define ADCS_PACKET_ERROR     0xFF
-
 #define ADCS_PACKET_TELEMETRY_BYTES 52
 #define ADCS_PACKET_ACK_BYTES        1
 #define ADCS_PACKET_ERROR_BYTES      1
 
 #define ADCS_RX_CRC_BYTES 2
 
+//ADCS COMMANDS
+#define ADCS_ATTITUDE_UPDATE_ID  0x13
+#define ADCS_ATTITUDE_UPDATE_BYTES 24
 
-
+#define ADCS_ORBIT_UPDATE_ID    0x20
+#define ADCS_ORBIT_UPDATE_BYTES   24
 //-------------Typedef and Enums-------------
+
+
+
+typedef struct {
+    float roll;
+    float pitch;
+    float yaw;
+
+    float roll_dot;
+    float pitch_dot;
+    float yaw_dot;
+}ADCS_attitudeCommand_t;
+
+typedef struct {
+    float t_gmt;
+    float mean_anomaly;
+    float eccentricity;
+    float argp;
+    float raan;
+    float inclination;
+}ADCS_orbitalParameters_t;
+
+
+typedef enum{
+    ADCS_RX_WAIT_SOF,
+    ADCS_RX_GET_ID,
+    ADCS_RX_READ_PAYLOAD,
+    ADCS_RX_CHECK_CRC
+}ADCS_rx_state_t;
+
 typedef struct {
     float detumble_scale;
+
+    //Commands
+    ADCS_attitudeCommand_t attitude_command;
+    ADCS_orbitalParameters_t orbital_parameters;
 
     //Attitude
     float roll;
@@ -53,17 +90,9 @@ typedef struct {
 
     bool detumble_command_ready;
     bool pointing_command_ready;
-
+    bool attitude_command_ready;
+    bool orbital_parameters_ready;
 }ADCS_Handler_t;
-
-
-typedef enum{
-    ADCS_RX_WAIT_SOF,
-    ADCS_RX_GET_ID,
-    ADCS_RX_READ_PAYLOAD,
-    ADCS_RX_CHECK_CRC
-}ADCS_rx_state_t;
-
 
 
 //-------------Variables-------------
@@ -75,7 +104,9 @@ void ADCS_Init(void);
 void ADCS_task(void);
 void ADCS_getTelemetry(void);
 void ADCS_processPacket(uint8_t id,uint8_t* packet, uint8_t packet_len);
+void ADCS_updateAttitude(void);
+void ADCS_updateOrbitalParameters(void);
 uint8_t ADCS_getRxPayloadLength(uint8_t);
 void ADCS_debugPrint(void);
-uint16_t crc16_ccitt(const uint8_t *data, uint16_t length);
+
 #endif

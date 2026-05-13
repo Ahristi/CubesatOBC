@@ -73,7 +73,24 @@ bool UART_receive(Stream *port, UART_msg_t* msg)
 }
 void UART_transmit(Stream *port, UART_msg_t* msg)
 {
+    uint8_t data[RX_HEADER_BYTES + RX_BUFFER_BYTES + RX_CRC_BYTES];
 
+    if (msg->length > RX_BUFFER_BYTES)
+    {
+        return;
+    }
+    msg->sof = UART_SOF;
+    data[0] = msg->sof;
+    data[1] = msg->id;
+    data[2] = msg->length;
+    memcpy(&data[RX_HEADER_BYTES], msg->payload, msg->length);
+    msg->crc = UART_crc16_ccitt(data, msg->length + RX_HEADER_BYTES);
+    uint8_t crc_offset = RX_HEADER_BYTES + msg->length;
+
+    data[crc_offset]     = msg->crc & 0xFF;
+    data[crc_offset + 1] = msg->crc >> 8;
+
+    port->write(data, msg->length + RX_HEADER_BYTES + RX_CRC_BYTES);
 }
 
 
@@ -81,7 +98,7 @@ void UART_transmit(Stream *port, UART_msg_t* msg)
 bool UART_checkCRC(UART_msg_t* msg)
 {
     uint16_t crc;
-    uint8_t data[RX_BUFFER_BYTES];
+    uint8_t data[RX_HEADER_BYTES + RX_BUFFER_BYTES];
     data[0] = msg->sof;
     data[1] = msg->id;
     data[2] = msg->length;

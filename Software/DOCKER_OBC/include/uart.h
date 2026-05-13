@@ -20,9 +20,7 @@ typedef enum{
     UART_RX_CHECK_CRC
 }UART_rx_state_t;
 
-typedef struct{
 
-}UART_handler_t;
 
 typedef struct{
     uint8_t id;
