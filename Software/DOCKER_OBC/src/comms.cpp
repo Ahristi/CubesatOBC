@@ -19,7 +19,7 @@ void COMMS_task()
         hcomms.beacon_tick = 0;
         COMMS_sendBeacon();
     }
-
+    
     return;
 }
 
@@ -50,7 +50,6 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
         RTC_time.minutes,
         RTC_time.seconds
     );
-
     memcpy(data->identifier, "DOCKER", CUBESAT_IDENTIFIER_BYTES);
     data->rail_3v3_voltage      = EPS_telemetry.rail_3v3.voltage;
     data->rail_3v3_current_ch1  = EPS_telemetry.rail_3v3.current_ch1;
