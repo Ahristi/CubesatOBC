@@ -34,7 +34,7 @@ typedef struct{
 
 //--------------Function Prototypes----------------
 uint16_t UART_crc16_ccitt(const uint8_t *data, uint16_t length);
-uint16_t UART_checkCRC(UART_msg_t* msg);
+bool UART_checkCRC(UART_msg_t* msg);
 bool UART_getMessage(UART_msg_t* msg);
 
 

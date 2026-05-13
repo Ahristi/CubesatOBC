@@ -7,7 +7,7 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
     uint8_t byte;
     uint8_t idx = 0;
     uint8_t crc_idx = 0;
-    uint16_t crc;
+
 
     while (port->available())
     {   
@@ -37,12 +37,12 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
                 {
                     return false;
                 }
-                Serial.println("UART length received")
+                Serial.println("UART length received");
                 state = UART_RX_READ_PAYLOAD;
             }
             case UART_RX_READ_PAYLOAD:
             {
-                msg->packet[idx++] = byte;
+                msg->payload[idx++] = byte;
                 if (idx >= msg->length)
                 {
                     state = UART_RX_WAIT_SOF;
@@ -53,7 +53,7 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
             {
                 msg->crc |= (byte << crc_idx);
                 crc_idx++;
-                if (crc_idx = RX_CRC_BYTES)
+                if (crc_idx == RX_CRC_BYTES)
                 {
                     state = UART_RX_CHECK_CRC;
                 }
@@ -65,17 +65,18 @@ bool UART_getMessage(Stream *port, UART_msg_t* msg)
             }
             default:
             {
-                state = ADCS_RX_WAIT_SOF;
+                state = UART_RX_WAIT_SOF;
                 break;
             }
         }
     }
+    return false;
 }
 
 bool UART_checkCRC(UART_msg_t* msg)
 {
     uint16_t crc;
-    uint8_t data[RX_BUFFER_BYTES]
+    uint8_t data[RX_BUFFER_BYTES];
     data[0] = msg->sof;
     data[1] = msg->id;
     data[2] = msg->length;
