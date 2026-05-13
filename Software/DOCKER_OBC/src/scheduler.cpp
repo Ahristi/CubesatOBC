@@ -18,7 +18,6 @@ Task tasks[] = {
 };
 
 
-
 static constexpr uint8_t NUM_TASKS = sizeof(tasks) / sizeof(tasks[0]);
 
 void Scheduler_init()

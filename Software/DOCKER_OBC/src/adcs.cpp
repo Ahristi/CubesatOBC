@@ -45,23 +45,31 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
     if (id == ADCS_PACKET_TELEMETRY)
     {
-        hadcs.roll      = payload[0];
-        hadcs.pitch     = payload[1];
-        hadcs.yaw       = payload[2];
+        if (payload_length < 13 * sizeof(float))
+        {
+            Serial.println("ADCS telemetry packet too short");
+            return;
+        }
 
-        hadcs.roll_dot  = payload[3];
-        hadcs.pitch_dot = payload[4];
-        hadcs.yaw_dot   = payload[5];
+        float *p = (float *)payload;
 
-        hadcs.rw1       = payload[6];
-        hadcs.rw2       = payload[7];
-        hadcs.rw3       = payload[8];
+        hadcs.roll      = p[0];
+        hadcs.pitch     = p[1];
+        hadcs.yaw       = p[2];
 
-        hadcs.it1       = payload[9];
-        hadcs.it2       = payload[10];
-        hadcs.it3       = payload[11];
+        hadcs.roll_dot  = p[3];
+        hadcs.pitch_dot = p[4];
+        hadcs.yaw_dot   = p[5];
 
-        hadcs.detumble_scale = payload[12];
+        hadcs.rw1       = p[6];
+        hadcs.rw2       = p[7];
+        hadcs.rw3       = p[8];
+
+        hadcs.it1       = p[9];
+        hadcs.it2       = p[10];
+        hadcs.it3       = p[11];
+
+        hadcs.detumble_scale = p[12];
 
         Serial.println("ADCS telemetry updated");
     }
@@ -86,11 +94,13 @@ void ADCS_updateAttitude(void)
     if (hadcs.attitude_command_ready)
     {
         UART_msg_t msg;
-        hadcs.attitude_command_ready =  false;
+        hadcs.attitude_command_ready = false;
         msg.sof    = UART_SOF;
         msg.id     = ADCS_ATTITUDE_UPDATE_ID;
-        msg.length = ADCS_ATTITUDE_UPDATE_BYTES;
+        msg.length = sizeof(ADCS_attitudeCommand_t);
+        memcpy(msg.payload, &hadcs.attitude_command, sizeof(ADCS_attitudeCommand_t));
         UART_transmit(&Serial1, &msg);
+        Serial.println("Sent attitude command");
     }
 }
 void ADCS_updateOrbitalParameters(void)
@@ -102,6 +112,7 @@ void ADCS_updateOrbitalParameters(void)
         msg.sof    = UART_SOF;
         msg.id     = ADCS_ORBIT_UPDATE_ID;
         msg.length = ADCS_ORBIT_UPDATE_BYTES;
+        memcpy(msg.payload, &hadcs.orbital_parameters, sizeof(ADCS_orbitalParameters_t));
         UART_transmit(&Serial1, &msg);
     }
 }
