@@ -71,6 +71,11 @@ typedef struct __attribute__((packed)) {
     uint16_t Comms_Faults;
 }COMMS_BeaconData_t;
 
+typedef enum {
+    COMMS_IDLE,
+    COMMS_WOD_DOWNLINK, 
+    COMMS_PAYLOAD_DOWNLINK,
+}COMMS_state_t;
 
 
 typedef enum {
@@ -82,15 +87,22 @@ typedef enum {
     DOWNLINK_ERROR
 }COMMS_downlinkState_t;
 
-typedef struct{
-    uint32_t beacon_tick;
+typedef struct {
+    COMMS_downlinkState_t state;
+    bool downlink_ready;
+    bool downlink_active;
+    uint8_t ack_retries;
+    
     uint16_t file_packets;
     uint16_t packet_idx;
-    
-    COMMS_downlinkState_t downlink_state;
-    uint8_t ack_retries;
-    bool file_open;
-    bool downlink_ready;
+}COMMS_downlinkHandler_t;
+
+
+
+typedef struct{
+    uint32_t beacon_tick;
+    COMMS_downlinkHandler_t wod_handler;
+    COMMS_downlinkHandler_t payload_handler;
 }COMMS_Handler_t;
 
 

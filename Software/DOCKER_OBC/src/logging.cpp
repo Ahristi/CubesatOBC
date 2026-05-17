@@ -10,12 +10,14 @@ LOGGING_EPSTelemetry_t EPS_telemetry;
 LOGGING_ADCSTelemetry_t ADCS_telemetry;
 LOGGING_faults_t satellite_faults;
 RTC_Time_t RTC_time;
-
+LOGGING_BufferState_t hlogging;
 
 void LOGGING_Init()
 {
     pinMode(SD_CS_PIN, OUTPUT);
     pinMode(SD_SW_PIN, INPUT);
+
+    //Check SD Card functionality
     if (!SD.begin(SD_CS_PIN))
     {
         Serial.println("SD card initialisation failed!");
@@ -26,6 +28,8 @@ void LOGGING_Init()
         }
     }
     Serial.println("SD Card Initialised!");
+
+    //Check the RTC
     Wire.beginTransmission(RV3028_ADDR);
     if (Wire.endTransmission() != 0)
     {
@@ -33,6 +37,22 @@ void LOGGING_Init()
         Serial.println("RV-3028 not detected");
     }
     Serial.println("RV-3028 detected");
+
+    //Initialise metadata for WOD file, experiment file and results file
+
+    //WOD Data
+    LOGGING_Metadata_t wod_meta;
+    wod_meta.ID = WOD_META_ID;
+    wod_meta.max_records = WOD_MAX_RECORDS;
+    wod_meta.record_size = sizeof(LOGGING_Record_t);
+    wod_meta.write_ptr = 0;
+    wod_meta.read_ptr = 0;
+    if (!LOGGING_saveMetadata(WOD_META_FILE,&wod_meta))
+    {
+        satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+    }
+    Serial.println("Initialised WOD metadata");
+    //TODO: Metadata for results and experiment
 }
 bool LOGGING_getTime(RTC_Time_t *time)
 {
@@ -66,10 +86,8 @@ bool LOGGING_getTime(RTC_Time_t *time)
     return true;
 }
 
-
 void LOGGING_task()
 {
-
     if (LOGGING_getTime(&RTC_time))
     {
         Serial.printf(
@@ -82,19 +100,20 @@ void LOGGING_task()
             RTC_time.seconds
         );
     }
-
-
     else
     {
         Serial.println("RTC read failed");
+        return;
     }
+    /*
     char filename[32];
     snprintf(filename, sizeof(filename),
-             "/%04u%02u%02u.csv",
+             "/%04u%02u%02u.bin",
              RTC_time.year,
              RTC_time.month,
-             RTC_time.day);
-    File file = SD.open(filename, FILE_WRITE);
+             RTC_time.day);*/
+
+    File file = SD.open(WOD_DATA_FILE, FILE_WRITE);
     if (!file)
     {
         Serial.println("Failed to open log file");
@@ -102,63 +121,93 @@ void LOGGING_task()
         return;
     }
 
-    file.printf(
-            "%04u,%02u,%02u,%02u,%02u,%02u,"
-            "%u,%u,%u,"
-            "%u,%u,%u,"
-            "%u,%u,"
-            "%u,%u,%u,"
-            "%u,%u,%u,%u,"
-            "%u,%u,%u,%u,"
-            "%d,%d,%d,"
-            "%d,%d,%d,"
-            "%d,%d,%d,"
-            "0x%04X\n",
-        RTC_time.year,
-        RTC_time.month,
-        RTC_time.day,
-        RTC_time.hours,
-        RTC_time.minutes,
-        RTC_time.seconds,
-        EPS_telemetry.rail_3v3.voltage,
-        EPS_telemetry.rail_3v3.current_ch1,
-        EPS_telemetry.rail_3v3.current_ch2,
+    LOGGING_Record_t record = {0};
 
-        EPS_telemetry.rail_5v.voltage,
-        EPS_telemetry.rail_5v.current_ch1,
-        EPS_telemetry.rail_5v.current_ch2,
+    record.year    = RTC_time.year;
+    record.month   = RTC_time.month;
+    record.day     = RTC_time.day;
+    record.hours   = RTC_time.hours;
+    record.minutes = RTC_time.minutes;
+    record.seconds = RTC_time.seconds;
 
-        EPS_telemetry.rail_6v.voltage,
-        EPS_telemetry.rail_6v.current_ch1,
+    record.rail_3v3_voltage     = EPS_telemetry.rail_3v3.voltage;
+    record.rail_3v3_current_ch1 = EPS_telemetry.rail_3v3.current_ch1;
+    record.rail_3v3_current_ch2 = EPS_telemetry.rail_3v3.current_ch2;
 
-        EPS_telemetry.rail_12v.voltage,
-        EPS_telemetry.rail_12v.current_ch1,
-        EPS_telemetry.rail_12v.current_ch2,
+    record.rail_5v_voltage     = EPS_telemetry.rail_5v.voltage;
+    record.rail_5v_current_ch1 = EPS_telemetry.rail_5v.current_ch1;
+    record.rail_5v_current_ch2 = EPS_telemetry.rail_5v.current_ch2;
 
-        EPS_telemetry.mppt1_voltage,
-        EPS_telemetry.mppt1_current,
-        EPS_telemetry.mppt2_voltage,
-        EPS_telemetry.mppt2_current,
+    record.rail_6v_voltage     = EPS_telemetry.rail_6v.voltage;
+    record.rail_6v_current_ch1 = EPS_telemetry.rail_6v.current_ch1;
 
-        EPS_telemetry.battery_voltage,
-        EPS_telemetry.battery_current,
-        EPS_telemetry.battery_temp,
-        EPS_telemetry.mcu_temp,
+    record.rail_12v_voltage     = EPS_telemetry.rail_12v.voltage;
+    record.rail_12v_current_ch1 = EPS_telemetry.rail_12v.current_ch1;
+    record.rail_12v_current_ch2 = EPS_telemetry.rail_12v.current_ch2;
 
-        ADCS_telemetry.roll,
-        ADCS_telemetry.pitch,
-        ADCS_telemetry.yaw,
-        ADCS_telemetry.x_rw_speed,
-        ADCS_telemetry.y_rw_speed,
-        ADCS_telemetry.z_rw_speed,
-        ADCS_telemetry.x_mag_current,
-        ADCS_telemetry.y_mag_current,
-        ADCS_telemetry.z_mag_current,
+    record.mppt1_voltage = EPS_telemetry.mppt1_voltage;
+    record.mppt1_current = EPS_telemetry.mppt1_current;
+    record.mppt2_voltage = EPS_telemetry.mppt2_voltage;
+    record.mppt2_current = EPS_telemetry.mppt2_current;
 
-        satellite_faults.OBC_Faults
-    );
+    record.battery_voltage = EPS_telemetry.battery_voltage;
+    record.battery_current = EPS_telemetry.battery_current;
+    record.battery_temp    = EPS_telemetry.battery_temp;
+    record.mcu_temp        = EPS_telemetry.mcu_temp;
+
+    record.roll  = ADCS_telemetry.roll;
+    record.pitch = ADCS_telemetry.pitch;
+    record.yaw   = ADCS_telemetry.yaw;
+
+    record.x_rw_speed = ADCS_telemetry.x_rw_speed;
+    record.y_rw_speed = ADCS_telemetry.y_rw_speed;
+    record.z_rw_speed = ADCS_telemetry.z_rw_speed;
+
+    record.x_mag_current = ADCS_telemetry.x_mag_current;
+    record.y_mag_current = ADCS_telemetry.y_mag_current;
+    record.z_mag_current = ADCS_telemetry.z_mag_current;
+
+    record.obc_faults = satellite_faults.OBC_Faults;
+
+    size_t bytes_written = file.write((uint8_t *)&record, sizeof(LOGGING_Record_t));
+
+    if (bytes_written != sizeof(LOGGING_Record_t))
+    {
+        Serial.println("Failed to write complete log record");
+        satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+    }
+
     file.close();
 }
+
+
+
+bool LOGGING_saveMetadata(const char *filename, const LOGGING_Metadata_t *meta)
+{
+    File file = SD.open(filename, FILE_WRITE);
+    if (!file)
+    {
+        Serial.println("Failed to open metadata");
+        return false;
+    }
+
+    if (!file.seek(0))
+    {
+        Serial.println("Failed to seek metadata file");
+        file.close();
+        return false;
+    }
+    size_t written = file.write((const uint8_t *)meta, sizeof(LOGGING_Metadata_t));
+    file.close();
+
+    if (written != sizeof(LOGGING_Metadata_t))
+    {
+        Serial.println("Failed to complete metadata");
+    }
+    return true;
+}
+
+
 
 
 

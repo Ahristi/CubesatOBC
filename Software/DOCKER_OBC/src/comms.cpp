@@ -12,14 +12,13 @@ void COMMS_Init(void)
 
 void COMMS_task()
 {
+
     hcomms.beacon_tick++;
-    
     if (hcomms.beacon_tick >= BEACON_TICK_OC)
     {
         hcomms.beacon_tick = 0;
         COMMS_sendBeacon();
     }
-    
     return;
 }
 
@@ -90,6 +89,7 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->Comms_Faults          = satellite_faults.Comms_Faults;
 }
 
+/*
 void COMMS_downLinkHandler(void)
 {
     switch (hcomms.downlink_state)
@@ -144,3 +144,4 @@ void COMMS_downLinkHandler(void)
             
     }
 }
+*/
