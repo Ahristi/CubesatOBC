@@ -16,9 +16,17 @@
 #define BEACON_TIME_STRING_BYTES 32
 
 #define BEACON_MSG_ID   0x65
-#define BEACON_MSG_DATA_BYTES  72
+#define WOD_INFO_ID     0x66
+#define WOD_REQUEST_ID  0x67
+#define COMMS_ACK_ID    0x68
+#define WOD_RECORD_ID   0x69
+#define END_TRANSFER_ID 0x70
 
-#define MAX_ACK_RETRIES 3
+#define BEACON_MSG_DATA_BYTES  72
+#define WOD_INFO_BYTES 9
+
+
+#define MAX_ACK_RETRIES 300
 
 
 
@@ -89,21 +97,22 @@ typedef enum {
 
 typedef struct {
     COMMS_downlinkState_t state;
-    bool downlink_ready;
     bool downlink_active;
     uint8_t ack_retries;
-    
-    uint16_t file_packets;
-    uint16_t packet_idx;
-}COMMS_downlinkHandler_t;
+    uint32_t end_ptr;
+    uint32_t num_chunks;
+}COMMS_fileHandler_t;
 
 
 
 typedef struct{
     uint32_t beacon_tick;
-    COMMS_downlinkHandler_t wod_handler;
-    COMMS_downlinkHandler_t payload_handler;
+    COMMS_fileHandler_t wod_handler;
+    COMMS_fileHandler_t results_handler;
 }COMMS_Handler_t;
+
+
+
 
 
 extern COMMS_Handler_t hcomms;
@@ -116,8 +125,11 @@ void COMMS_sendBeacon(void);
 void COMMS_packBeacon(COMMS_BeaconData_t* data);
 void COMMS_downLinkHandler(void);
 void COMMS_startDownlink(const char *filename, uint16_t file_id);
-void COMMS_sendFileInfo();
-void COMMS_sendNextFileChunk();
-bool COMMS_getAck();
-void COMMS_sendEndFile();
+void COMMS_wodDownlinkHandler(void);
+void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks);
+void COMMS_sendNextFileChunk(void);
+bool COMMS_getLink(void);
+bool COMMS_sendWOD(void);
+bool COMMS_getAck(void);
+bool COMMS_sendEndTransfer(void);
 #endif

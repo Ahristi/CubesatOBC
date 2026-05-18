@@ -45,13 +45,6 @@
 
 
 
-typedef struct
-{
-    uint64_t write_seq;       // next sequence number to write
-    uint64_t downlink_seq;    // next sequence number to transmit
-} LOGGING_BufferState_t;
-
-extern LOGGING_BufferState_t hlogging;
 
 //-------------Typedefs and Enums-------------
 typedef struct
@@ -166,17 +159,15 @@ typedef struct __attribute__((packed))
 {
     uint32_t ID;
 
-    uint64_t write_ptr;       
-    uint64_t read_ptr;    
+    uint32_t write_ptr;       
+    uint32_t read_ptr;    
 
     uint32_t max_records;
     uint32_t record_size;
 
 } LOGGING_Metadata_t;
 
-
-
-
+extern LOGGING_Metadata_t wod_meta;
 
 typedef struct
 {
@@ -201,11 +192,13 @@ extern RTC_Time_t RTC_time;
 void LOGGING_Init();
 void LOGGING_task();
 bool LOGGING_getTime(RTC_Time_t *time);
+bool LOGGING_readMetadata(const char *filename, const LOGGING_Metadata_t *meta);
 bool LOGGING_saveMetadata(const char *filename, const LOGGING_Metadata_t *meta);
 bool LOGGING_initTelemetryFile(void);
-
+bool LOGGING_readWODRecord(uint32_t pointer, LOGGING_Record_t *record);
 uint8_t decToBcd(uint8_t val);
 uint8_t bcdToDec(uint8_t val);
+
 
 
 

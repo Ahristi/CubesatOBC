@@ -16,7 +16,7 @@ bool UART_receive(Stream *port, UART_msg_t* msg)
             {
                 if (byte == UART_SOF)
                 {
-                    Serial.println("UART SOF received");
+
                     memset(msg, 0, sizeof(UART_msg_t));   
                     msg->sof = byte;
                     idx = 0;
@@ -38,7 +38,6 @@ bool UART_receive(Stream *port, UART_msg_t* msg)
                 {
                     return false;
                 }
-                Serial.println("UART length received");
                 state = UART_RX_READ_PAYLOAD;
                 break;
             }

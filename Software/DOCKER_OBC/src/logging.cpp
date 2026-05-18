@@ -10,7 +10,7 @@ LOGGING_EPSTelemetry_t EPS_telemetry;
 LOGGING_ADCSTelemetry_t ADCS_telemetry;
 LOGGING_faults_t satellite_faults;
 RTC_Time_t RTC_time;
-LOGGING_BufferState_t hlogging;
+LOGGING_Metadata_t wod_meta;
 
 void LOGGING_Init()
 {
@@ -40,19 +40,44 @@ void LOGGING_Init()
 
     //Initialise metadata for WOD file, experiment file and results file
 
-    //WOD Data
-    LOGGING_Metadata_t wod_meta;
-    wod_meta.ID = WOD_META_ID;
-    wod_meta.max_records = WOD_MAX_RECORDS;
-    wod_meta.record_size = sizeof(LOGGING_Record_t);
-    wod_meta.write_ptr = 0;
-    wod_meta.read_ptr = 0;
-    if (!LOGGING_saveMetadata(WOD_META_FILE,&wod_meta))
+    //Check for WOD metadata, if it doesn't exist then create ite
+    if (SD.exists(WOD_META_FILE))
     {
-        satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+        if (!LOGGING_readMetadata(WOD_META_FILE, &wod_meta))
+        {
+            satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+            return;
+        }
+        Serial.println("Successfully read WOD Metadata.");
+        //check the wod struct to make sure it matches expected
+        if ((wod_meta.ID != WOD_META_ID) || (wod_meta.max_records != WOD_MAX_RECORDS) || (wod_meta.record_size != sizeof(LOGGING_Record_t)))
+        {
+            Serial.println("Invalid metadata. Reinitialising.");
+            wod_meta.ID = WOD_META_ID;
+            wod_meta.max_records = WOD_MAX_RECORDS;
+            wod_meta.record_size = sizeof(LOGGING_Record_t);
+            wod_meta.read_ptr = 0;
+            wod_meta.write_ptr = 0;
+            if (!LOGGING_saveMetadata(WOD_META_FILE, &wod_meta))
+            {
+                satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+            }
+        }
     }
-    Serial.println("Initialised WOD metadata");
-    //TODO: Metadata for results and experiment
+    else
+    {
+        Serial.println("WOD metadata doesn't exist. Creating new metadata file.");
+        wod_meta.ID = WOD_META_ID;
+        wod_meta.max_records = WOD_MAX_RECORDS;
+        wod_meta.record_size = sizeof(LOGGING_Record_t);
+        wod_meta.read_ptr = 0;
+        wod_meta.write_ptr = 0;
+        if (!LOGGING_saveMetadata(WOD_META_FILE, &wod_meta))
+        {
+            satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+        }
+    }
+
 }
 bool LOGGING_getTime(RTC_Time_t *time)
 {
@@ -105,13 +130,6 @@ void LOGGING_task()
         Serial.println("RTC read failed");
         return;
     }
-    /*
-    char filename[32];
-    snprintf(filename, sizeof(filename),
-             "/%04u%02u%02u.bin",
-             RTC_time.year,
-             RTC_time.month,
-             RTC_time.day);*/
 
     File file = SD.open(WOD_DATA_FILE, FILE_WRITE);
     if (!file)
@@ -120,7 +138,9 @@ void LOGGING_task()
         satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
         return;
     }
-
+    uint32_t write_ptr = file.size() / sizeof(LOGGING_Record_t);
+    Serial.printf("Current WOD write pointer: %lu\n", write_ptr);
+    Serial.printf("Current WOD read pointer: %lu\n", wod_meta.read_ptr);
     LOGGING_Record_t record = {0};
 
     record.year    = RTC_time.year;
@@ -168,12 +188,12 @@ void LOGGING_task()
     record.z_mag_current = ADCS_telemetry.z_mag_current;
 
     record.obc_faults = satellite_faults.OBC_Faults;
-
     size_t bytes_written = file.write((uint8_t *)&record, sizeof(LOGGING_Record_t));
+    wod_meta.write_ptr = write_ptr + 1;
 
     if (bytes_written != sizeof(LOGGING_Record_t))
     {
-        Serial.println("Failed to write complete log record");
+        Serial.println("Failed to write !LOGGING_readMetaDatacomplete log record");
         satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
     }
 
@@ -181,7 +201,28 @@ void LOGGING_task()
 }
 
 
+bool LOGGING_readMetadata(const char *filename, const LOGGING_Metadata_t *meta)
+{
+    File file = SD.open(WOD_META_FILE, FILE_READ);
 
+    if (!file)
+    {
+        Serial.println("Failed to open metadata file");
+        return false;
+    }
+
+    size_t bytes_read = file.read((uint8_t *)&wod_meta,
+                                sizeof(LOGGING_Metadata_t));
+
+    file.close();
+
+    if (bytes_read != sizeof(LOGGING_Metadata_t))
+    {
+        Serial.println("Metadata read incomplete");
+        return false;
+    }
+    return true;
+}
 bool LOGGING_saveMetadata(const char *filename, const LOGGING_Metadata_t *meta)
 {
     File file = SD.open(filename, FILE_WRITE);
@@ -206,6 +247,42 @@ bool LOGGING_saveMetadata(const char *filename, const LOGGING_Metadata_t *meta)
     }
     return true;
 }
+bool LOGGING_readWODRecord(uint32_t pointer, LOGGING_Record_t *record)
+{
+    if (record == NULL)
+    {
+        return false;
+    }
+
+    File file = SD.open(WOD_DATA_FILE, FILE_READ);
+    if (!file)
+    {
+        satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+        return false;
+    }
+
+    uint32_t offset = pointer * sizeof(LOGGING_Record_t);
+
+    if (!file.seek(offset))
+    {
+        file.close();
+        return false;
+    }
+
+    size_t bytes_read = file.read((uint8_t *)record, sizeof(LOGGING_Record_t));
+
+    file.close();
+
+    if (bytes_read != sizeof(LOGGING_Record_t))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+
 
 
 

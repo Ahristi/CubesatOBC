@@ -8,16 +8,23 @@ void COMMS_Init(void)
 {
     Serial3.begin(COMMS_BAUDRATE);
     Serial.println("COMMS UART initialised on Serial3");
+    hcomms.beacon_tick = 0;
+    hcomms.wod_handler.state = DOWNLINK_IDLE;
+    hcomms.wod_handler.ack_retries     = 0;
+    hcomms.wod_handler.downlink_active = false;
 }
 
 void COMMS_task()
 {
-
-    hcomms.beacon_tick++;
-    if (hcomms.beacon_tick >= BEACON_TICK_OC)
+    COMMS_wodDownlinkHandler();
+    if (!hcomms.wod_handler.downlink_active)
     {
-        hcomms.beacon_tick = 0;
-        COMMS_sendBeacon();
+        hcomms.beacon_tick++;
+        if (hcomms.beacon_tick >= BEACON_TICK_OC)
+        {
+            hcomms.beacon_tick = 0;
+            COMMS_sendBeacon();
+        }
     }
     return;
 }
@@ -89,59 +96,187 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->Comms_Faults          = satellite_faults.Comms_Faults;
 }
 
-/*
-void COMMS_downLinkHandler(void)
+
+void COMMS_wodDownlinkHandler(void)
 {
-    switch (hcomms.downlink_state)
+    switch (hcomms.wod_handler.state)
     {
         case DOWNLINK_IDLE:
         {
+            if (COMMS_getLink())
+            {
+                Serial.println("Link Received!");
+                hcomms.wod_handler.state = DOWNLINK_SEND_INFO;
+                hcomms.wod_handler.end_ptr = wod_meta.write_ptr;
+                hcomms.wod_handler.num_chunks = hcomms.wod_handler.end_ptr - wod_meta.read_ptr;
+                if (hcomms.wod_handler.num_chunks == 0)
+                {
+                    hcomms.wod_handler.state = DOWNLINK_COMPLETE;
+                }
+                else
+                {
+                    hcomms.wod_handler.state = DOWNLINK_SEND_INFO;
+                }
+            }
             break;
         }
         case DOWNLINK_SEND_INFO:
         {
-            COMMS_sendFileInfo();
+            //Note: The uart message uses the same ID that is sent in the payload from the WOD_INFO_ID define.
+            //I know its a little confusing, but that ID is removed in the uart protocol wrapper, so we also add it in the data payload
+            //so that the ground station knows what we are sending it. 
+            COMMS_sendFileInfo(WOD_INFO_ID, sizeof(LOGGING_Record_t), hcomms.wod_handler.num_chunks);
+            hcomms.wod_handler.state = DOWNLINK_WAIT_ACK;
             break;
         }
         case DOWNLINK_SEND_CHUNK:
         {
-            COMMS_sendNextFileChunk();
+            COMMS_sendWOD();
+            hcomms.wod_handler.state = DOWNLINK_WAIT_ACK;
             break;
         }
         case DOWNLINK_WAIT_ACK:
         {
             if (COMMS_getAck())
             {
-                hcomms.ack_retries    = 0;
-                hcomms.downlink_state = DOWNLINK_SEND_CHUNK;
+                hcomms.wod_handler.ack_retries    = 0;
+                wod_meta.read_ptr++;
+                if (wod_meta.read_ptr > hcomms.wod_handler.end_ptr)
+                {
+                    hcomms.wod_handler.state = DOWNLINK_COMPLETE; 
+                }
+                else
+                {
+                    hcomms.wod_handler.state = DOWNLINK_SEND_CHUNK;
+                }
             }
             else
             {
-                hcomms.ack_retries++;
-                if (hcomms.ack_retries >= MAX_ACK_RETRIES)
+                hcomms.wod_handler.ack_retries++;
+                if (hcomms.wod_handler.ack_retries >= MAX_ACK_RETRIES)
                 {
-                    hcomms.ack_retries    = 0;
-                    hcomms.downlink_ready = 0;
-                    hcomms.downlink_state = DOWNLINK_ERROR;
+                    hcomms.wod_handler.ack_retries    = 0;
+                    hcomms.wod_handler.downlink_active = false;
+                    hcomms.wod_handler.state = DOWNLINK_ERROR;
                 }
             }
             break;
         }
         case DOWNLINK_COMPLETE:
         {
-            COMMS_sendEndFile();
+            //Save the new read pointer to the SD card so we don't resend old data.
+            LOGGING_saveMetadata(WOD_META_FILE, &wod_meta);
+            COMMS_sendEndTransfer();
+            hcomms.wod_handler.downlink_active = false;
+            hcomms.wod_handler.state = DOWNLINK_IDLE;
             break;
         }
         case DOWNLINK_ERROR:
         {
+            hcomms.wod_handler.state = DOWNLINK_IDLE;
             break;
         }
         default:
         {
-            hcomms.downlink_state = DOWNLINK_IDLE;
+            hcomms.wod_handler.state = DOWNLINK_IDLE;
             break;
         }
-            
     }
 }
-*/
+
+
+bool COMMS_getLink(void)
+{
+    UART_msg_t msg;
+    if (UART_receive(&Serial3, &msg))
+    {
+        Serial.println("Received message from comms board");
+        if (msg.length < 1)
+        {
+            Serial.println("Bad comms request length");
+            return false;
+        }
+
+        if ((msg.id == WOD_REQUEST_ID))
+        {
+            hcomms.wod_handler.downlink_active = true;
+            return true;
+        }
+        else
+        {
+            Serial.println("Warning: Bad command received from Comms board.");
+            return false;
+        }
+    }
+    return false;
+}
+bool COMMS_getAck(void)
+{
+    UART_msg_t msg;
+    if (UART_receive(&Serial3, &msg))
+    {
+        if (msg.length < 1)
+        {
+            Serial.println("Bad ack message length");
+            return false;
+        }
+
+        if ((msg.id == COMMS_ACK_ID))
+        {
+            return true;
+        }
+        else
+        {
+            Serial.println("Warning: Bad command received from Comms board.");
+            return false;
+        }
+    }
+    return false;
+}
+
+void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks)
+{
+    UART_msg_t msg;
+    uint8_t data[WOD_INFO_BYTES];
+
+    msg.sof    = UART_SOF;
+    msg.id     = WOD_INFO_ID;
+    msg.length = WOD_INFO_BYTES;
+
+    data[0] = fileID;
+
+    memcpy(&data[1], &chunk_size, sizeof(uint32_t));
+    memcpy(&data[5], &num_chunks, sizeof(uint32_t));
+
+    memcpy(msg.payload, data, WOD_INFO_BYTES);
+
+    UART_transmit(&Serial3, &msg);
+
+    Serial.println("Sent WOD INFO");
+}
+
+bool COMMS_sendWOD(void)
+{
+    UART_msg_t msg;
+    LOGGING_Record_t record;
+    if(!LOGGING_readWODRecord(wod_meta.read_ptr, &record))
+    {
+        return false;
+    }
+    msg.sof = UART_SOF;
+    msg.id  = WOD_RECORD_ID;
+    msg.length = sizeof(LOGGING_Record_t);
+    memcpy(msg.payload, &record, sizeof(LOGGING_Record_t));
+    UART_transmit(&Serial3, &msg);
+    return true;
+}
+bool COMMS_sendEndTransfer(void)
+{
+    UART_msg_t msg;
+    msg.sof = UART_SOF;
+    msg.id  = END_TRANSFER_ID;
+    msg.length = 1;
+    msg.payload[0] = END_TRANSFER_ID; //Send end transfer ID in the payload as well.
+    UART_transmit(&Serial3, &msg);
+    return true;
+}
