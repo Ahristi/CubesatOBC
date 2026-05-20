@@ -150,6 +150,7 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
     if (id == ADCS_PACKET_HW_DATA_ID)
     {
+        Serial.println("Received Hardware Data");
         memcpy(&hwHandle.hw_data, payload, sizeof(ADCS_hardwareData_t));
     }
     if (id == ADCS_PACKET_CONTROL_ID)
