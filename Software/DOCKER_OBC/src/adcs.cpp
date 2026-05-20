@@ -2,6 +2,9 @@
 #include <Arduino.h>
  
 ADCS_Handler_t hadcs;
+ADCS_HardwareHandler_t hwHandle;
+ADCS_StateHandle_t stateHandle;
+ADCS_hardwareInstruction_t controlHandle;
 
 void ADCS_Init(void)
 {
@@ -11,7 +14,7 @@ void ADCS_Init(void)
     hadcs.detumble_command_ready   = false;
     hadcs.pointing_command_ready   = false;
     Serial1.begin(ADCS_BAUDRATE);
-    Serial.println("ADCS UART initialised on Serial4");
+    Serial.println("ADCS UART initialised on Serial1");
 }
 
 void ADCS_task(void)
@@ -30,6 +33,74 @@ void ADCS_getTelemetry(void)
         Serial.println("ADCS Message Received!");
         ADCS_processPacket(msg.id, msg.payload, msg.length);
     }
+}
+
+void ADCS_getStateControllerUART(Stream* port)
+{
+    UART_msg_t msg;
+    if (UART_receive(port, &msg))
+    {
+        Serial.println("ADCS Controller Message Received!");
+        ADCS_processStateControllerUART(port, msg.id, msg.payload, msg.length);
+    }
+}
+
+
+void ADCS_processStateControllerUART(Stream* port, uint8_t id,uint8_t* packet, uint8_t packet_len)
+{
+    uint8_t expected_length = ADCS_getRxPayloadLength(id);
+    if (packet_len != expected_length)
+    {
+        Serial.print("Bad ADCS packet length. RX=");
+        Serial.print(packet_len);
+        Serial.print(" Expected=");
+        Serial.println(expected_length);
+        return;
+    }
+    if (id == ADCS_PACKET_REQUEST_ID)
+    {
+        // Respond with hardware info
+    }
+    if (id == ADCS_PACKET_CONTROL_ID)
+    {
+        // Respond by loading into memory
+    }
+}
+
+void ADCS_hardwareRequestResponse(Stream* port)
+{
+    UART_msg_t msg;
+    msg.sof    = UART_SOF;
+    msg.id     = ADCS_PACKET_HW_DATA_ID;
+    msg.length = sizeof(ADCS_hardwareData_t);
+    memcpy(msg.payload, &hwHandle.hw_data, sizeof(ADCS_hardwareData_t));
+    UART_transmit(port, &msg);
+    Serial.println("Sent hardware data");
+}
+
+void ADCS_sendHardwareRequest(Stream* port)
+{
+    ADCS_requestHardwareData_t hwRequest;
+    hwRequest.request = true;
+
+    UART_msg_t msg;
+    msg.sof    = UART_SOF;
+    msg.id     = ADCS_PACKET_REQUEST_ID;
+    msg.length = sizeof(ADCS_requestHardwareData_t);
+    memcpy(msg.payload, &hwRequest, sizeof(ADCS_requestHardwareData_t));
+    UART_transmit(port, &msg);
+    Serial.println("Sent request for hardware data");
+}
+
+void ADCS_sendControlInstruction(Stream* port)
+{
+    UART_msg_t msg;
+    msg.sof    = UART_SOF;
+    msg.id     = ADCS_PACKET_CONTROL_ID;
+    msg.length = sizeof(ADCS_hardwareInstruction_t);
+    memcpy(msg.payload, &controlHandle, sizeof(ADCS_hardwareInstruction_t));
+    UART_transmit(port, &msg);
+    Serial.println("Sent control instruction");
 }
 
 void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
@@ -73,6 +144,18 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
 
         Serial.println("ADCS telemetry updated");
     }
+    if (id == ADCS_PACKET_REQUEST_ID)
+    {
+        ADCS_hardwareRequestResponse(HW_TO_STATE_SERIAL);
+    }
+    if (id == ADCS_PACKET_HW_DATA_ID)
+    {
+        memcpy(&hwHandle.hw_data, payload, sizeof(ADCS_hardwareData_t));
+    }
+    if (id == ADCS_PACKET_CONTROL_ID)
+    {
+        memcpy(&hwHandle.ctrl, payload, sizeof(ADCS_hardwareInstruction_t));
+    }
 }
 
 uint8_t ADCS_getRxPayloadLength(uint8_t id) 
@@ -85,6 +168,11 @@ uint8_t ADCS_getRxPayloadLength(uint8_t id)
             return ADCS_PACKET_ACK_BYTES;
         case ADCS_PACKET_ERROR:
             return ADCS_PACKET_ERROR_BYTES;
+        case ADCS_PACKET_CONTROL_ID:
+            return ADCS_PACKET_CONTROL_BYTES;
+        case ADCS_PACKET_REQUEST_ID:
+            return ADCS_PACKET_REQUEST_BYTES;
+
         default:
             return 0;
     } 
