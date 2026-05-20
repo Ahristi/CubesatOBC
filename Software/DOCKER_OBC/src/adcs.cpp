@@ -146,6 +146,7 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
     if (id == ADCS_PACKET_REQUEST_ID)
     {
+        Serial.println("Received request for hardware data");
         ADCS_hardwareRequestResponse(HW_TO_STATE_SERIAL);
     }
     if (id == ADCS_PACKET_HW_DATA_ID)
