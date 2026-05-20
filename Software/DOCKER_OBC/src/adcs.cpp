@@ -163,8 +163,7 @@ void ADCS_receivePacket(Stream *port)
 {
     UART_msg_t msg;
     UART_receive(port, &msg);
-    uint8_t len = ADCS_getRxPayloadLength(msg.id);
-    ADCS_processPacket(msg.id, msg.payload, len);
+    ADCS_processPacket(msg.id, msg.payload, msg.length);
 }
 
 uint8_t ADCS_getRxPayloadLength(uint8_t id) 
