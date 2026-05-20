@@ -158,6 +158,15 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
 }
 
+
+void ADCS_receivePacket(Stream *port)
+{
+    UART_msg_t msg;
+    UART_receive(port, &msg);
+    uint8_t len = ADCS_getRxPayloadLength(msg.id);
+    ADCS_processPacket(msg.id, msg.payload, len);
+}
+
 uint8_t ADCS_getRxPayloadLength(uint8_t id) 
 {
     switch (id)
@@ -169,9 +178,11 @@ uint8_t ADCS_getRxPayloadLength(uint8_t id)
         case ADCS_PACKET_ERROR:
             return ADCS_PACKET_ERROR_BYTES;
         case ADCS_PACKET_CONTROL_ID:
-            return ADCS_PACKET_CONTROL_BYTES;
+            return sizeof(ADCS_hardwareInstruction_t);
         case ADCS_PACKET_REQUEST_ID:
-            return ADCS_PACKET_REQUEST_BYTES;
+            return sizeof(ADCS_requestHardwareData_t);
+        case ADCS_PACKET_HW_DATA_ID:
+            return sizeof(ADCS_hardwareData_t);
 
         default:
             return 0;

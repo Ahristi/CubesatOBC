@@ -164,6 +164,7 @@ extern ADCS_hardwareInstruction_t controlHandle;
 void ADCS_Init(void);
 void ADCS_task(void);
 void ADCS_getTelemetry(void);
+void ADCS_receivePacket(Stream *port);
 void ADCS_processPacket(uint8_t id,uint8_t* packet, uint8_t packet_len);
 void ADCS_updateAttitude(void);
 void ADCS_updateOrbitalParameters(void);
