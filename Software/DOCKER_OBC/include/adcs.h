@@ -4,13 +4,13 @@
 #include <Arduino.h>
 #include "uart.h"
 
-#define HW_TO_STATE_SERIAL &Serial4
-#define STATE_TO_HW_SERIAL &Serial4
+#define HW_TO_STATE_SERIAL &Serial2
+#define STATE_TO_HW_SERIAL &Serial2
 
 //-------------Defines-------------
 #define DETUMBLE_RATE_THRESHOLD 0.1 
 #define DETUMBLE_SCALE_START 10.0f
-#define ADCS_BAUDRATE 3000000
+#define ADCS_BAUDRATE 115200
 
 
 #define ADCS_SOF 0x64
@@ -42,6 +42,10 @@
 // ADCS STATE CONTROLLER COMMANDS AND HARDWARE FEEDBACK
 #define ADCS_PACKET_REQUEST_ID    0x7A
 #define ADCS_PACKET_REQUEST_BYTES    1
+
+
+#define ADCS_PACKET_READY_ID      0x77
+#define ADCS_PACKET_READY_BYTES    1
 
 #define ADCS_PACKET_HW_DATA_ID    0x5D
 #define ADCS_PACKET_HW_DATA_BYTES    1
@@ -75,6 +79,10 @@ typedef struct {
 typedef struct {
     bool request;
 }ADCS_requestHardwareData_t;
+
+typedef struct {
+    bool ready;
+}ADCS_hardwareReady_t;
 
 typedef struct {
     float omega_rw_x;
@@ -139,6 +147,7 @@ typedef struct {
 
 
 typedef struct{
+    bool ready;
     ADCS_hardwareData_t hw_data;
     ADCS_hardwareInstruction_t ctrl;
 } ADCS_HardwareHandler_t;
@@ -173,8 +182,8 @@ void ADCS_debugPrint(void);
 
 // ADCS Hardware/state controller comms
 void ADCS_getStateControllerUART(Stream* port);
-void ADCS_processStateControllerUART(Stream* port, uint8_t id,uint8_t* packet, uint8_t packet_len);
 void ADCS_sendHardwareRequest(Stream* port);
+void ADCS_sendHardwareReady(Stream* port);
 void ADCS_hardwareRequestResponse(Stream* port);
 void ADCS_sendControlInstruction(Stream* port);
 
