@@ -44,7 +44,7 @@ void ADCS_hardwareRequestResponse(Stream* port)
     msg.length = sizeof(ADCS_hardwareData_t);
     memcpy(msg.payload, &hwHandle.hw_data, sizeof(ADCS_hardwareData_t));
     UART_transmit(port, &msg);
-    Serial.println("Sent hardware data");
+    // Serial.println("Sent hardware data");
 }
 
 void ADCS_sendHardwareRequest(Stream* port)
@@ -58,7 +58,7 @@ void ADCS_sendHardwareRequest(Stream* port)
     msg.length = sizeof(ADCS_requestHardwareData_t);
     memcpy(msg.payload, &hwRequest, msg.length);
     UART_transmit(port, &msg);
-    Serial.println("Sent request for hardware data");
+    // Serial.println("Sent request for hardware data");
 }
 
 
@@ -84,7 +84,7 @@ void ADCS_sendControlInstruction(Stream* port)
     msg.length = sizeof(ADCS_hardwareInstruction_t);
     memcpy(msg.payload, &controlHandle, sizeof(ADCS_hardwareInstruction_t));
     UART_transmit(port, &msg);
-    Serial.println("Sent control instruction");
+    // Serial.println("Sent control instruction");
 }
 
 void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
@@ -130,12 +130,12 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
     else if (id == ADCS_PACKET_REQUEST_ID)
     {
-        Serial.println("Received request for hardware data");
+        // Serial.println("Received request for hardware data");
         ADCS_hardwareRequestResponse(HW_TO_STATE_SERIAL);
     }
     else if (id == ADCS_PACKET_HW_DATA_ID)
     {
-        Serial.println("Received Hardware Data");
+        // Serial.println("Received Hardware Data");
         memcpy(&hwHandle.hw_data, payload, sizeof(ADCS_hardwareData_t));
     }
     else if (id == ADCS_PACKET_CONTROL_ID)
