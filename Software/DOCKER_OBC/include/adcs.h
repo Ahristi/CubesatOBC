@@ -149,7 +149,7 @@ typedef struct {
 typedef struct{
     bool ready;
     ADCS_hardwareData_t hw_data;
-    ADCS_hardwareInstruction_t ctrl;
+    ADCS_hardwareData_t ctrl;
 } ADCS_HardwareHandler_t;
 
 typedef struct{
