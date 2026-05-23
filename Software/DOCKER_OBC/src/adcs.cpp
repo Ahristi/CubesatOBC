@@ -136,15 +136,16 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     else if (id == ADCS_PACKET_HW_DATA_ID)
     {
         // Serial.println("Received Hardware Data");
-        memcpy(&hwHandle.hw_data, payload, sizeof(ADCS_hardwareData_t));
+        memcpy(&(hwHandle.hw_data), payload, sizeof(ADCS_hardwareData_t));
     }
     else if (id == ADCS_PACKET_CONTROL_ID)
     {
-        memcpy(&hwHandle.ctrl, payload, sizeof(ADCS_hardwareInstruction_t));
+        Serial.println("Received control data");
+        memcpy(&(hwHandle.ctrl), payload, sizeof(ADCS_hardwareInstruction_t));
     }
     else if (id == ADCS_PACKET_READY_ID)
     {
-        Serial.print("Received hardware ready");
+        // Serial.print("Received hardware ready");
         hwHandle.ready = true;
     }
     
@@ -154,9 +155,9 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
 void ADCS_receivePacket(Stream *port)
 {
     UART_msg_t msg;
-    if (UART_receive(port, &msg))
+    while (UART_receive(port, &msg))
     {
-        Serial.println("ADCS Controller Message Received!");
+        // Serial.println("ADCS Controller Message Received!");
         ADCS_processPacket(msg.id, msg.payload, msg.length);
     }
 }

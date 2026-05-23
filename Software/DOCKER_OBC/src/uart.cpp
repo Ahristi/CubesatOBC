@@ -3,73 +3,135 @@
 
 bool UART_receive(Stream *port, UART_msg_t* msg)
 {
-    UART_rx_state_t state = UART_RX_WAIT_SOF;
-    uint8_t byte;
-    uint8_t idx = 0;
-    uint8_t crc_idx = 0;
+    // Internal persistent parser state.
+    // Keeps the public function prototype unchanged.
+    struct UART_RxContext {
+        Stream *port = nullptr;
+        UART_rx_state_t state = UART_RX_WAIT_SOF;
+        uint8_t idx = 0;
+        uint8_t crc_idx = 0;
+        UART_msg_t working_msg;
+    };
+
+    // Increase if you later parse more than four UART/Stream objects.
+    static UART_RxContext ctxs[4];
+
+    auto getContext = [&](Stream *p) -> UART_RxContext* {
+        for (int i = 0; i < 4; i++) {
+            if (ctxs[i].port == p) {
+                return &ctxs[i];
+            }
+        }
+
+        for (int i = 0; i < 4; i++) {
+            if (ctxs[i].port == nullptr) {
+                ctxs[i].port = p;
+                ctxs[i].state = UART_RX_WAIT_SOF;
+                ctxs[i].idx = 0;
+                ctxs[i].crc_idx = 0;
+                memset(&ctxs[i].working_msg, 0, sizeof(UART_msg_t));
+                return &ctxs[i];
+            }
+        }
+
+        return nullptr;
+    };
+
+    UART_RxContext *ctx = getContext(port);
+    if (ctx == nullptr) {
+        return false;
+    }
+
+    auto resetContext = [&]() {
+        ctx->state = UART_RX_WAIT_SOF;
+        ctx->idx = 0;
+        ctx->crc_idx = 0;
+        memset(&ctx->working_msg, 0, sizeof(UART_msg_t));
+    };
+
     while (port->available())
-    {   
-        byte = port->read();
-        switch (state)
+    {
+        uint8_t byte = (uint8_t)port->read();
+
+        switch (ctx->state)
         {
             case UART_RX_WAIT_SOF:
             {
                 if (byte == UART_SOF)
                 {
-
-                    memset(msg, 0, sizeof(UART_msg_t));   
-                    msg->sof = byte;
-                    idx = 0;
-                    crc_idx = 0;
-                    state = UART_RX_GET_ID;
+                    resetContext();
+                    ctx->working_msg.sof = byte;
+                    ctx->state = UART_RX_GET_ID;
                 }
                 break;
             }
+
             case UART_RX_GET_ID:
             {
-                msg->id = byte;
-                state = UART_RX_GET_LENGTH;
+                ctx->working_msg.id = byte;
+                ctx->state = UART_RX_GET_LENGTH;
                 break;
             }
+
             case UART_RX_GET_LENGTH:
             {
-                msg->length = byte;
-                if (msg->length == 0 || msg->length > RX_BUFFER_BYTES)
+                ctx->working_msg.length = byte;
+
+                if (ctx->working_msg.length == 0 ||
+                    ctx->working_msg.length > RX_BUFFER_BYTES)
                 {
-                    return false;
+                    resetContext();
+                    break;
                 }
-                state = UART_RX_READ_PAYLOAD;
+
+                ctx->state = UART_RX_READ_PAYLOAD;
                 break;
             }
+
             case UART_RX_READ_PAYLOAD:
             {
-                msg->payload[idx++] = byte;
-                if (idx >= msg->length)
+                ctx->working_msg.payload[ctx->idx++] = byte;
+
+                if (ctx->idx >= ctx->working_msg.length)
                 {
-                    state = UART_RX_READ_CRC;
+                    ctx->state = UART_RX_READ_CRC;
                 }
+
                 break;
             }
+
             case UART_RX_READ_CRC:
             {
-                
-                msg->crc |= ((uint16_t)byte << (8 * crc_idx));
-                crc_idx++;
-                if (crc_idx == RX_CRC_BYTES)
+                ctx->working_msg.crc |= ((uint16_t)byte << (8 * ctx->crc_idx));
+                ctx->crc_idx++;
+
+                if (ctx->crc_idx >= RX_CRC_BYTES)
                 {
-                    return UART_checkCRC(msg);
+                    bool crc_ok = UART_checkCRC(&ctx->working_msg);
+
+                    if (crc_ok)
+                    {
+                        memcpy(msg, &ctx->working_msg, sizeof(UART_msg_t));
+                    }
+
+                    resetContext();
+                    return crc_ok;
                 }
+
                 break;
             }
+
             default:
             {
-                state = UART_RX_WAIT_SOF;
+                resetContext();
                 break;
             }
         }
     }
+
     return false;
 }
+
 void UART_transmit(Stream *port, UART_msg_t* msg)
 {
     uint8_t data[RX_HEADER_BYTES + RX_BUFFER_BYTES + RX_CRC_BYTES];
