@@ -16,9 +16,11 @@ struct Task {
     TaskFunction function;
     uint32_t period_ms;
     uint32_t last_run_ms;
+    uint32_t duration;
+    const char *name;
 };
 
 void Scheduler_init();
 void Scheduler_run();
-
+void Scheduler_debugPrint();
 #endif

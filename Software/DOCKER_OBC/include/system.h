@@ -6,6 +6,7 @@
 #include "adcs.h"
 #include "comms.h"
 #include "logging.h"
+#include "scheduler.h"
 #include "math.h"
 //-------------Defines-------------
 #define SYSTEM_LED0_PIN     43

@@ -9,12 +9,12 @@ void SYSTEM_task();
 
 
 Task tasks[] = {
-    {COMMS_task,      5, 0},
-    {EPS_task,        5, 0},
-    {ADCS_task,     200, 0},
-    {PAYLOAD_task, 1000, 0},
-    {LOGGING_task, 1000, 0},
-    {SYSTEM_task,   100, 0},
+    {COMMS_task,      5, 0, 0, "Comms"},
+    {EPS_task,        5, 0, 0, "EPS"},
+    {ADCS_task,     200, 0, 0, "ADCS"},
+    {PAYLOAD_task, 1000, 0, 0, "Payload"},
+    {LOGGING_task, 1000, 0, 0, "Logging"},
+    {SYSTEM_task,   100, 0, 0, "System"},
 };
 
 
@@ -36,6 +36,19 @@ void Scheduler_run() {
         if (now - task.last_run_ms >= task.period_ms) {
             task.last_run_ms = now;
             task.function();
+            task.duration = millis() -  task.last_run_ms;
         }
+    }
+}
+
+void Scheduler_debugPrint()
+{
+    Serial.println();
+    Serial.println("========== Schedular DEBUG ==========");
+    for (auto &task : tasks) 
+    {
+        Serial.println(task.name);
+        Serial.print(task.duration);
+        Serial.println(" ms");
     }
 }

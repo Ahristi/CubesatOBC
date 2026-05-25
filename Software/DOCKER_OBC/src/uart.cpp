@@ -1,23 +1,34 @@
 #include "uart.h"
 
 
-bool UART_receive(Stream *port, UART_msg_t* msg)
+bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
 {
     UART_rx_state_t state = UART_RX_WAIT_SOF;
     uint8_t byte;
     uint8_t idx = 0;
     uint8_t crc_idx = 0;
-    while (port->available())
-    {   
+
+    uint32_t last_byte_time = micros();
+
+    while ((uint32_t)(micros() - last_byte_time) < timeout_us)
+    {
+        if (!port->available())
+        {
+            continue;   // no delay, just keep polling until timeout
+        }
+
         byte = port->read();
+
+        // Reset inter-byte timeout whenever progress is made
+        last_byte_time = micros();
+
         switch (state)
         {
             case UART_RX_WAIT_SOF:
             {
                 if (byte == UART_SOF)
                 {
-
-                    memset(msg, 0, sizeof(UART_msg_t));   
+                    memset(msg, 0, sizeof(UART_msg_t));
                     msg->sof = byte;
                     idx = 0;
                     crc_idx = 0;
@@ -25,42 +36,50 @@ bool UART_receive(Stream *port, UART_msg_t* msg)
                 }
                 break;
             }
+
             case UART_RX_GET_ID:
             {
                 msg->id = byte;
                 state = UART_RX_GET_LENGTH;
                 break;
             }
+
             case UART_RX_GET_LENGTH:
             {
                 msg->length = byte;
+
                 if (msg->length == 0 || msg->length > RX_BUFFER_BYTES)
                 {
                     return false;
                 }
+
                 state = UART_RX_READ_PAYLOAD;
                 break;
             }
+
             case UART_RX_READ_PAYLOAD:
             {
                 msg->payload[idx++] = byte;
+
                 if (idx >= msg->length)
                 {
                     state = UART_RX_READ_CRC;
                 }
                 break;
             }
+
             case UART_RX_READ_CRC:
             {
-                
                 msg->crc |= ((uint16_t)byte << (8 * crc_idx));
                 crc_idx++;
+
                 if (crc_idx == RX_CRC_BYTES)
                 {
                     return UART_checkCRC(msg);
                 }
                 break;
             }
+
             default:
             {
                 state = UART_RX_WAIT_SOF;
@@ -68,8 +87,10 @@ bool UART_receive(Stream *port, UART_msg_t* msg)
             }
         }
     }
+
     return false;
 }
+
 void UART_transmit(Stream *port, UART_msg_t* msg)
 {
     uint8_t data[RX_HEADER_BYTES + RX_BUFFER_BYTES + RX_CRC_BYTES];

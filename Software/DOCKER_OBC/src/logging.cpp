@@ -197,7 +197,7 @@ void LOGGING_task()
         satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
     }
 
-    file.close();
+    
 }
 
 
