@@ -130,9 +130,9 @@ def send_ack(ser: serial.Serial):
 
     ser.write(pkt)
     ser.flush()
-
+    """
     print("TX ACK")
-
+    """
 
 def parse_wod_info(payload: bytes):
     """
@@ -191,7 +191,7 @@ def main():
                 elif msg_id == WOD_RECORD_ID:
                     records_received += 1
                     f.write(payload)
-
+                    """
                     print(
                         f"RX WOD_RECORD {records_received}"
                         + (
@@ -201,6 +201,7 @@ def main():
                         )
                         + f" ({len(payload)} bytes)"
                     )
+                    """
 
                     if record_size is not None and len(payload) != record_size:
                         print(

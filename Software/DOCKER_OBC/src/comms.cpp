@@ -188,7 +188,7 @@ void COMMS_wodDownlinkHandler(void)
 bool COMMS_getLink(void)
 {
     UART_msg_t msg;
-    if (UART_receive(&Serial3, &msg))
+    if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
     {
         Serial.println("Received message from comms board");
         if (msg.length < 1)
@@ -210,10 +210,13 @@ bool COMMS_getLink(void)
     }
     return false;
 }
+
+
+
 bool COMMS_getAck(void)
 {
     UART_msg_t msg;
-    if (UART_receive(&Serial3, &msg))
+    if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
     {
         if (msg.length < 1)
         {

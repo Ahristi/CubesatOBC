@@ -20,7 +20,7 @@ void ADCS_Init(void)
 void ADCS_task(void)
 {
     ADCS_getTelemetry();
-    ADCS_updateAttitude();
+    ADCS_updateAttitude(); 
     ADCS_updateOrbitalParameters();
     return;
 }
@@ -28,7 +28,7 @@ void ADCS_task(void)
 void ADCS_getTelemetry(void)
 {
     UART_msg_t msg;
-    if (UART_receive(&Serial1, &msg))
+    if (UART_receive(&Serial1, &msg, DEFAULT_UART_TIMEOUT_US))
     {
         Serial.println("ADCS Message Received!");
         ADCS_processPacket(msg.id, msg.payload, msg.length);
