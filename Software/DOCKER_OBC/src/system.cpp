@@ -21,7 +21,7 @@ void SYSTEM_task(void)
     //EPS_debugPrint();
     //SYSTEM_debugPrint();
     //ADCS_debugPrint();
-    Scheduler_debugPrint();
+    //Scheduler_debugPrint();
 }
 
 
