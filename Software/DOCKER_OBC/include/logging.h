@@ -10,7 +10,7 @@
 #define SD_SW_PIN 2
 #define RV3028_ADDR 0x52
 #define LOGGING_MAX_RECORDS 100000
-#define WOD_LOCAL_BUFFER 60
+#define WOD_LOCAL_BUFFER 16
 #define WOD_DATA_FILE                   "/wod.bin"
 #define WOD_META_FILE                   "/wod_metadata.bin"
 #define RESULT_FILE                     "/result.bin"

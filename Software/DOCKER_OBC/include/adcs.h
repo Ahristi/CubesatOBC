@@ -40,9 +40,10 @@ typedef struct {
     float pitch;
     float yaw;
 
-    float roll_dot;
-    float pitch_dot;
-    float yaw_dot;
+
+    float omega_x;
+    float omega_y;
+    float omega_z;
 }ADCS_attitudeCommand_t;
 
 typedef struct {

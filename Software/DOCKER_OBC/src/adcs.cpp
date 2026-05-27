@@ -46,6 +46,7 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
     if (id == ADCS_PACKET_TELEMETRY)
     {
+        Serial.println("ADCS Telemetry received");
         if (payload_length < sizeof(ADCS_TelemetryPacket_t))
         {
             Serial.println("ADCS telemetry packet too short");
@@ -112,12 +113,12 @@ void ADCS_telemetryHandle(void)
     ADCS_telemetry.omega_x        = hadcs.telemetry.omega_x;
     ADCS_telemetry.omega_y        = hadcs.telemetry.omega_y;
     ADCS_telemetry.omega_z        = hadcs.telemetry.omega_z;
-    ADCS_telemetry.x_rw_speed            = hadcs.telemetry.rw1;    
-    ADCS_telemetry.y_rw_speed            = hadcs.telemetry.rw2;    
-    ADCS_telemetry.z_rw_speed            = hadcs.telemetry.rw3;    
-    ADCS_telemetry.x_mag_current            = hadcs.telemetry.it1;    
-    ADCS_telemetry.y_mag_current            = hadcs.telemetry.it2;    
-    ADCS_telemetry.z_mag_current            = hadcs.telemetry.it3;    
+    ADCS_telemetry.x_rw_speed     = hadcs.telemetry.rw1;    
+    ADCS_telemetry.y_rw_speed     = hadcs.telemetry.rw2;    
+    ADCS_telemetry.z_rw_speed     = hadcs.telemetry.rw3;    
+    ADCS_telemetry.x_mag_current  = hadcs.telemetry.it1;    
+    ADCS_telemetry.y_mag_current  = hadcs.telemetry.it2;    
+    ADCS_telemetry.z_mag_current  = hadcs.telemetry.it3;    
     ADCS_telemetry.detumble_scale = hadcs.telemetry.detumble_scale;
     ADCS_telemetry.faults         = hadcs.telemetry.faults;
 }
@@ -131,7 +132,7 @@ void ADCS_debugPrint(void)
     Serial.println("========== ADCS ==========");
 
     Serial.print("Detumble Scale: ");
-    Serial.println(hadcs.detumble_scale, 6);
+    Serial.println(hadcs.telemetry.detumble_scale, 6);
 
     Serial.println();
 
