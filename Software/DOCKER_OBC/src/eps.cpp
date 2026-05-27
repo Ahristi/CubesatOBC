@@ -49,7 +49,7 @@ void EPS_RailTelemHandle(RailTelemetry_t* railTelem, uint8_t* buf, uint8_t len)
     }
     else
     {
-        railTelem->voltage    = buf[0]<< 8 |  buf[1];
+        railTelem->voltage     = buf[0]<< 8 |  buf[1];
         railTelem->current_ch1 = buf[2]<< 8 |  buf[3];
         railTelem->current_ch2 = buf[4]<< 8 |  buf[5];
     }

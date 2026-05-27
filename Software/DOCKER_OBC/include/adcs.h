@@ -2,6 +2,7 @@
 #define ADCS_H
 #include <stdint.h>
 #include "uart.h"
+#include "logging.h"
 
 //-------------Defines-------------
 #define DETUMBLE_RATE_THRESHOLD 0.1 
@@ -61,6 +62,31 @@ typedef enum{
     ADCS_RX_CHECK_CRC
 }ADCS_rx_state_t;
 
+
+
+
+typedef struct {
+    float roll;
+    float pitch;
+    float yaw;
+
+    float omega_x;
+    float omega_y;
+    float omega_z;
+
+    float rw1;
+    float rw2;
+    float rw3;
+
+    float it1;
+    float it2;
+    float it3;
+
+    float detumble_scale;
+    uint16_t faults;
+    
+}ADCS_TelemetryPacket_t;
+
 typedef struct {
     float detumble_scale;
 
@@ -68,31 +94,16 @@ typedef struct {
     ADCS_attitudeCommand_t attitude_command;
     ADCS_orbitalParameters_t orbital_parameters;
 
-    //Attitude
-    float roll;
-    float pitch;
-    float yaw;
+    //Telemetry
+    ADCS_TelemetryPacket_t telemetry; 
 
-    //Angular Velocity
-    float roll_dot;
-    float pitch_dot;
-    float yaw_dot;
-
-    //Reaction Wheel Speeds
-    float rw1;
-    float rw2;
-    float rw3;
-
-    //Magnetorquer speeds
-    float it1;
-    float it2;
-    float it3;
-
+    //OBC->ADCS Command Ready flags
     bool detumble_command_ready;
     bool pointing_command_ready;
     bool attitude_command_ready;
     bool orbital_parameters_ready;
 }ADCS_Handler_t;
+
 
 
 //-------------Variables-------------
@@ -103,6 +114,7 @@ extern ADCS_Handler_t hadcs;
 void ADCS_Init(void);
 void ADCS_task(void);
 void ADCS_getTelemetry(void);
+void ADCS_telemetryHandle(void);
 void ADCS_processPacket(uint8_t id,uint8_t* packet, uint8_t packet_len);
 void ADCS_updateAttitude(void);
 void ADCS_updateOrbitalParameters(void);

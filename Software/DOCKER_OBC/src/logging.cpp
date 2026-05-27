@@ -148,9 +148,6 @@ void LOGGING_task()
         return;
     }
 
-
-    //uint32_t write_ptr = file.size() / sizeof(LOGGING_Record_t);
-
     LOGGING_Record_t record = {0};
 
     record.year    = RTC_time.year;
@@ -175,29 +172,39 @@ void LOGGING_task()
     record.rail_12v_current_ch1 = EPS_telemetry.rail_12v.current_ch1;
     record.rail_12v_current_ch2 = EPS_telemetry.rail_12v.current_ch2;
 
-    record.mppt1_voltage = EPS_telemetry.mppt1_voltage;
-    record.mppt1_current = EPS_telemetry.mppt1_current;
-    record.mppt2_voltage = EPS_telemetry.mppt2_voltage;
-    record.mppt2_current = EPS_telemetry.mppt2_current;
+    record.mppt1_voltage   = EPS_telemetry.mppt1_voltage;
+    record.mppt1_current   = EPS_telemetry.mppt1_current;
+    record.mppt2_voltage   = EPS_telemetry.mppt2_voltage;
+    record.mppt2_current   = EPS_telemetry.mppt2_current;
 
     record.battery_voltage = EPS_telemetry.battery_voltage;
     record.battery_current = EPS_telemetry.battery_current;
     record.battery_temp    = EPS_telemetry.battery_temp;
     record.mcu_temp        = EPS_telemetry.mcu_temp;
 
-    record.roll  = ADCS_telemetry.roll;
-    record.pitch = ADCS_telemetry.pitch;
-    record.yaw   = ADCS_telemetry.yaw;
+    record.roll            = ADCS_telemetry.roll;
+    record.pitch           = ADCS_telemetry.pitch;
+    record.yaw             = ADCS_telemetry.yaw;
 
-    record.x_rw_speed = ADCS_telemetry.x_rw_speed;
-    record.y_rw_speed = ADCS_telemetry.y_rw_speed;
-    record.z_rw_speed = ADCS_telemetry.z_rw_speed; 
+    record.omega_x         = ADCS_telemetry.omega_x;
+    record.omega_y         = ADCS_telemetry.omega_y;
+    record.omega_z         = ADCS_telemetry.omega_z;
 
-    record.x_mag_current = ADCS_telemetry.x_mag_current;
-    record.y_mag_current = ADCS_telemetry.y_mag_current;
-    record.z_mag_current = ADCS_telemetry.z_mag_current;
+    record.x_rw_speed      = ADCS_telemetry.x_rw_speed;
+    record.y_rw_speed      = ADCS_telemetry.y_rw_speed;
+    record.z_rw_speed      = ADCS_telemetry.z_rw_speed; 
 
-    record.obc_faults = satellite_faults.OBC_Faults;
+    record.x_mag_current   = ADCS_telemetry.x_mag_current;
+    record.y_mag_current   = ADCS_telemetry.y_mag_current;
+    record.z_mag_current   = ADCS_telemetry.z_mag_current;
+
+    record.detumble_scale  = ADCS_telemetry.detumble_scale;
+
+    record.OBC_Faults      = satellite_faults.OBC_Faults;
+    record.ADCS_Faults     = satellite_faults.ADCS_Faults;
+    record.EPS_Faults      = satellite_faults.EPS_Faults;
+    record.Payload_Faults  = satellite_faults.Payload_Faults;
+    record.Comms_Faults    = satellite_faults.Comms_Faults;
 
     size_t bytes_written = wod_file.write((uint8_t *)&record, sizeof(LOGGING_Record_t));
     if (bytes_written == sizeof(record))

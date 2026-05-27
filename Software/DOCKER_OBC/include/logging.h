@@ -2,6 +2,9 @@
 #define LOGGING_H
 #include <stdint.h>
 
+
+
+
 //-------------Defines-------------
 #define SD_CS_PIN 10
 #define SD_SW_PIN 2
@@ -36,9 +39,6 @@
 #define EXPERIMENT_MAX_RECORDS  (RESULT_BUFFER_BYTES / RESULT_RECORD_BYTES)
 
 
-
-
-
 //-------------Bitmasks-------------
 #define OBC_FAULT_NO_SD_CARD (1U)   << 0
 #define OBC_FAULT_DEAD_SD_CARD (1U) << 1
@@ -67,7 +67,7 @@ typedef struct{
     uint16_t battery_voltage;
     uint16_t sys_voltage;
     uint16_t battery_current;
-    uint8_t battery_temp;
+    uint8_t  battery_temp;
 
     uint16_t mcu_temp;
     uint8_t  charger_die_temp;
@@ -82,17 +82,24 @@ typedef struct{
 }LOGGING_EPSTelemetry_t;
 
 typedef struct{
-    uint16_t roll;
-    uint16_t pitch;
-    uint16_t yaw;
-    uint16_t x_rw_speed;
-    uint16_t y_rw_speed;
-    uint16_t z_rw_speed;
+    float roll;
+    float pitch;
+    float yaw;
 
-    uint16_t x_mag_current;
-    uint16_t y_mag_current;
-    uint16_t z_mag_current;
+    float omega_x;
+    float omega_y;
+    float omega_z;
 
+    float x_rw_speed;
+    float y_rw_speed;
+    float z_rw_speed;
+
+    float x_mag_current;
+    float y_mag_current;
+    float z_mag_current;
+
+    float detumble_scale;
+    uint16_t faults;
 }LOGGING_ADCSTelemetry_t;
 
 typedef struct{
@@ -106,8 +113,8 @@ typedef struct{
 
 typedef struct __attribute__((packed))
 {
-    uint64_t sequence;
 
+    //EPS Telemetry
     uint16_t year;
     uint8_t  month;
     uint8_t  day;
@@ -140,19 +147,27 @@ typedef struct __attribute__((packed))
     uint16_t battery_temp;
     uint16_t mcu_temp;
 
-    int16_t roll;
-    int16_t pitch;
-    int16_t yaw;
-
-    int16_t x_rw_speed;
-    int16_t y_rw_speed;
-    int16_t z_rw_speed;
-
-    int16_t x_mag_current;
-    int16_t y_mag_current;
-    int16_t z_mag_current;
-
-    uint16_t obc_faults;
+    //ADCS Telemetry
+    float    roll;
+    float    pitch;
+    float    yaw;
+    float    omega_x;
+    float    omega_y;
+    float    omega_z;
+    float    x_rw_speed;
+    float    y_rw_speed;
+    float    z_rw_speed;
+    float    x_mag_current;
+    float    y_mag_current;
+    float    z_mag_current;
+    float    detumble_scale;
+    
+    //Subsystem Faults
+    uint16_t EPS_Faults;
+    uint16_t OBC_Faults;
+    uint16_t ADCS_Faults;
+    uint16_t Payload_Faults;
+    uint16_t Comms_Faults;
 
 } LOGGING_Record_t;
 

@@ -213,23 +213,15 @@ void SYSTEM_debugPrint(void)
 
     Serial.println("----------------------------------");
 
-    Serial.print("ADCS Roll Rate:  ");
-    Serial.println(hadcs.roll_dot, 6);
+    Serial.print("ADCS Omega:  ");
+    Serial.println(hadcs.telemetry.omega_x, 6);
 
     Serial.print("ADCS Pitch Rate: ");
-    Serial.println(hadcs.pitch_dot, 6);
+    Serial.println(hadcs.telemetry.omega_y, 6);
 
     Serial.print("ADCS Yaw Rate:   ");
-    Serial.println(hadcs.yaw_dot, 6);
+    Serial.println(hadcs.telemetry.omega_z, 6);
 
-    float body_rate_mag = sqrtf(
-        hadcs.roll_dot  * hadcs.roll_dot  +
-        hadcs.pitch_dot * hadcs.pitch_dot +
-        hadcs.yaw_dot   * hadcs.yaw_dot
-    );
-
-    Serial.print("Body Rate Mag:   ");
-    Serial.println(body_rate_mag, 6);
 
     Serial.println("----------------------------------");
 

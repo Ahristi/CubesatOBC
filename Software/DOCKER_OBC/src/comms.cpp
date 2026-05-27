@@ -86,6 +86,9 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->x_rw_speed            = ADCS_telemetry.x_rw_speed;
     data->y_rw_speed            = ADCS_telemetry.y_rw_speed;
     data->z_rw_speed            = ADCS_telemetry.z_rw_speed;
+    data->omega_x               = ADCS_telemetry.omega_x;    
+    data->omega_y               = ADCS_telemetry.omega_y;
+    data->omega_z               = ADCS_telemetry.omega_z;    
     data->x_mag_current         = ADCS_telemetry.x_mag_current;
     data->y_mag_current         = ADCS_telemetry.y_mag_current;
     data->z_mag_current         = ADCS_telemetry.z_mag_current;
