@@ -62,7 +62,7 @@ uint8_t ADCS_getRxPayloadLength(uint8_t id)
     switch (id)
     {
         case ADCS_PACKET_TELEMETRY:
-            return ADCS_PACKET_TELEMETRY_BYTES;
+            return sizeof(ADCS_TelemetryPacket_t);
         case ADCS_PACKET_ACK:
             return ADCS_PACKET_ACK_BYTES;
         case ADCS_PACKET_ERROR:
