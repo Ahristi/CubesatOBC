@@ -22,7 +22,7 @@
 #define WOD_RECORD_ID   0x69
 #define END_TRANSFER_ID 0x70
 
-#define BEACON_MSG_DATA_BYTES  72
+
 #define WOD_INFO_BYTES 9
 
 

@@ -35,7 +35,7 @@ void COMMS_sendBeacon(void)
     UART_msg_t msg;
     msg.sof = UART_SOF;
     msg.id  = BEACON_MSG_ID;
-    msg.length = BEACON_TIME_STRING_BYTES + CUBESAT_IDENTIFIER_BYTES + BEACON_MSG_DATA_BYTES;
+    msg.length = sizeof(COMMS_BeaconData_t);
     COMMS_BeaconData_t data;
     COMMS_packBeacon(&data);
     memcpy(msg.payload, &data, sizeof(COMMS_BeaconData_t));
