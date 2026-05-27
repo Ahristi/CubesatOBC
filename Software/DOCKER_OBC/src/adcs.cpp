@@ -11,7 +11,7 @@ void ADCS_Init(void)
     hadcs.detumble_command_ready   = false;
     hadcs.pointing_command_ready   = false;
     Serial1.begin(ADCS_BAUDRATE);
-    Serial.println("ADCS UART initialised on Serial4");
+    Serial.println("ADCS UART initialised on Serial1");
 }
 
 void ADCS_task(void)
