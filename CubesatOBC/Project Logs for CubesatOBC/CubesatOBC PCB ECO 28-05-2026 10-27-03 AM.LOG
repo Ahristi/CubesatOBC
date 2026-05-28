@@ -1,0 +1,4 @@
+Removed Pin From Net: NetName=OBC_ADCS_TX Pin=J2-A5
+Removed Pin From Net: NetName=OBC_ADCS_RX Pin=J2-A7
+Added Pin To Net: NetName=OBC_ADCS_RX Pin=J2-A5
+Added Pin To Net: NetName=OBC_ADCS_TX Pin=J2-A7
