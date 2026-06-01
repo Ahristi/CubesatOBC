@@ -22,7 +22,7 @@
 #define WOD_RECORD_ID   0x69
 #define END_TRANSFER_ID 0x70
 
-#define BEACON_MSG_DATA_BYTES  72
+
 #define WOD_INFO_BYTES 9
 
 
@@ -39,6 +39,8 @@
 typedef struct __attribute__((packed)) {
     char utc_time[BEACON_TIME_STRING_BYTES];
     uint8_t identifier[CUBESAT_IDENTIFIER_BYTES];
+
+    //EPS Telemetry
     uint16_t rail_3v3_voltage;
     uint16_t rail_3v3_current_ch1;
     uint16_t rail_3v3_current_ch2;
@@ -63,15 +65,22 @@ typedef struct __attribute__((packed)) {
     uint16_t mppt2_current;
     uint8_t  eFuse_states;
     uint8_t  eFuse_faults;
-    uint16_t roll;
-    uint16_t pitch;
-    uint16_t yaw;
-    uint16_t x_rw_speed;
-    uint16_t y_rw_speed;
-    uint16_t z_rw_speed;
-    uint16_t x_mag_current;
-    uint16_t y_mag_current;
-    uint16_t z_mag_current;
+
+    //ADCS Telemetry
+    float    roll;
+    float    pitch;
+    float    yaw;
+    float    omega_x;
+    float    omega_y;
+    float    omega_z;
+    float    x_rw_speed;
+    float    y_rw_speed;
+    float    z_rw_speed;
+    float    x_mag_current;
+    float    y_mag_current;
+    float    z_mag_current;
+    float    detumble_scale;
+    
     uint16_t EPS_Faults;
     uint16_t OBC_Faults;
     uint16_t ADCS_Faults;
@@ -97,8 +106,9 @@ typedef enum {
 
 typedef struct {
     COMMS_downlinkState_t state;
+    COMMS_downlinkState_t prev_state;
     bool downlink_active;
-    uint8_t ack_retries;
+    uint16_t ack_retries;
     uint32_t end_ptr;
     uint32_t num_chunks;
 }COMMS_fileHandler_t;

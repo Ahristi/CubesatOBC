@@ -11,6 +11,9 @@ LOGGING_ADCSTelemetry_t ADCS_telemetry;
 LOGGING_faults_t satellite_faults;
 RTC_Time_t RTC_time;
 LOGGING_Metadata_t wod_meta;
+static File wod_file;
+static uint32_t wod_buffer_len = 0; //Number WOD data entries buffered in local memory.
+
 
 void LOGGING_Init()
 {
@@ -27,8 +30,11 @@ void LOGGING_Init()
             satellite_faults.OBC_Faults |= OBC_FAULT_NO_SD_CARD;
         }
     }
-    Serial.println("SD Card Initialised!");
-
+    else
+    {
+        Serial.println("SD Card Initialised!");
+    }
+    
     //Check the RTC
     Wire.beginTransmission(RV3028_ADDR);
     if (Wire.endTransmission() != 0)
@@ -63,6 +69,20 @@ void LOGGING_Init()
                 satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
             }
         }
+
+        //Open the WOD file and calculate the current write pointer
+        wod_file = SD.open(WOD_DATA_FILE, FILE_WRITE);  
+        if (!wod_file)
+        {
+            Serial.println("Failed to open WOD file");
+            satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
+        }
+        uint32_t bytes = wod_file.size();
+        Serial.printf("WOD file size: %lu bytes\n", bytes);
+        Serial.printf("Record size: %u bytes\n", sizeof(LOGGING_Record_t));
+        Serial.printf("Write pointer: %lu\n", bytes / sizeof(LOGGING_Record_t));
+        wod_meta.write_ptr = bytes / sizeof(LOGGING_Record_t);
+
     }
     else
     {
@@ -113,6 +133,11 @@ bool LOGGING_getTime(RTC_Time_t *time)
 
 void LOGGING_task()
 {
+    Serial.print("Write Pointer: ");
+    Serial.println(wod_meta.write_ptr);
+    Serial.print("Read Pointer: ");
+    Serial.println(wod_meta.read_ptr);
+
     if (LOGGING_getTime(&RTC_time))
     {
         Serial.printf(
@@ -131,16 +156,6 @@ void LOGGING_task()
         return;
     }
 
-    File file = SD.open(WOD_DATA_FILE, FILE_WRITE);
-    if (!file)
-    {
-        Serial.println("Failed to open log file");
-        satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
-        return;
-    }
-    uint32_t write_ptr = file.size() / sizeof(LOGGING_Record_t);
-    Serial.printf("Current WOD write pointer: %lu\n", write_ptr);
-    Serial.printf("Current WOD read pointer: %lu\n", wod_meta.read_ptr);
     LOGGING_Record_t record = {0};
 
     record.year    = RTC_time.year;
@@ -165,35 +180,56 @@ void LOGGING_task()
     record.rail_12v_current_ch1 = EPS_telemetry.rail_12v.current_ch1;
     record.rail_12v_current_ch2 = EPS_telemetry.rail_12v.current_ch2;
 
-    record.mppt1_voltage = EPS_telemetry.mppt1_voltage;
-    record.mppt1_current = EPS_telemetry.mppt1_current;
-    record.mppt2_voltage = EPS_telemetry.mppt2_voltage;
-    record.mppt2_current = EPS_telemetry.mppt2_current;
+    record.mppt1_voltage   = EPS_telemetry.mppt1_voltage;
+    record.mppt1_current   = EPS_telemetry.mppt1_current;
+    record.mppt2_voltage   = EPS_telemetry.mppt2_voltage;
+    record.mppt2_current   = EPS_telemetry.mppt2_current;
 
     record.battery_voltage = EPS_telemetry.battery_voltage;
     record.battery_current = EPS_telemetry.battery_current;
     record.battery_temp    = EPS_telemetry.battery_temp;
     record.mcu_temp        = EPS_telemetry.mcu_temp;
 
-    record.roll  = ADCS_telemetry.roll;
-    record.pitch = ADCS_telemetry.pitch;
-    record.yaw   = ADCS_telemetry.yaw;
+    record.roll            = ADCS_telemetry.roll;
+    record.pitch           = ADCS_telemetry.pitch;
+    record.yaw             = ADCS_telemetry.yaw;
 
-    record.x_rw_speed = ADCS_telemetry.x_rw_speed;
-    record.y_rw_speed = ADCS_telemetry.y_rw_speed;
-    record.z_rw_speed = ADCS_telemetry.z_rw_speed;
+    record.omega_x         = ADCS_telemetry.omega_x;
+    record.omega_y         = ADCS_telemetry.omega_y;
+    record.omega_z         = ADCS_telemetry.omega_z;
 
-    record.x_mag_current = ADCS_telemetry.x_mag_current;
-    record.y_mag_current = ADCS_telemetry.y_mag_current;
-    record.z_mag_current = ADCS_telemetry.z_mag_current;
+    record.x_rw_speed      = ADCS_telemetry.x_rw_speed;
+    record.y_rw_speed      = ADCS_telemetry.y_rw_speed;
+    record.z_rw_speed      = ADCS_telemetry.z_rw_speed; 
 
-    record.obc_faults = satellite_faults.OBC_Faults;
-    size_t bytes_written = file.write((uint8_t *)&record, sizeof(LOGGING_Record_t));
-    wod_meta.write_ptr = write_ptr + 1;
+    record.x_mag_current   = ADCS_telemetry.x_mag_current;
+    record.y_mag_current   = ADCS_telemetry.y_mag_current;
+    record.z_mag_current   = ADCS_telemetry.z_mag_current;
 
-    if (bytes_written != sizeof(LOGGING_Record_t))
+    record.detumble_scale  = ADCS_telemetry.detumble_scale;
+
+    record.OBC_Faults      = satellite_faults.OBC_Faults;
+    record.ADCS_Faults     = satellite_faults.ADCS_Faults;
+    record.EPS_Faults      = satellite_faults.EPS_Faults;
+    record.Payload_Faults  = satellite_faults.Payload_Faults;
+    record.Comms_Faults    = satellite_faults.Comms_Faults;
+
+    size_t bytes_written = wod_file.write((uint8_t *)&record, sizeof(LOGGING_Record_t));
+    if (bytes_written == sizeof(record))
     {
-        Serial.println("Failed to write !LOGGING_readMetaDatacomplete log record");
+        wod_meta.write_ptr++;
+        wod_buffer_len++;
+        Serial.printf("Current WOD write pointer: %lu\n", wod_meta.write_ptr);
+        Serial.printf("Current WOD read pointer: %lu\n", wod_meta.read_ptr);
+        if (wod_buffer_len >= WOD_LOCAL_BUFFER)
+        {
+            wod_file.flush();
+            wod_buffer_len = 0;
+            LOGGING_saveMetadata(WOD_META_FILE, &wod_meta);
+        }
+    }
+    else
+    {
         satellite_faults.OBC_Faults |= OBC_FAULT_DEAD_SD_CARD;
     }
 
@@ -247,6 +283,7 @@ bool LOGGING_saveMetadata(const char *filename, const LOGGING_Metadata_t *meta)
     }
     return true;
 }
+
 bool LOGGING_readWODRecord(uint32_t pointer, LOGGING_Record_t *record)
 {
     if (record == NULL)

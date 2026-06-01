@@ -18,10 +18,10 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
 
     //Debug
-    //EPS_debugPrint();
+    EPS_debugPrint();
     //SYSTEM_debugPrint();
     //ADCS_debugPrint();
-    Scheduler_debugPrint();
+    //Scheduler_debugPrint();
 }
 
 
@@ -85,6 +85,7 @@ void SYSTEM_stateMachine(void)
         {
             EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
             EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
+            EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             heps.eFuse_msg_ready = true;
         }
         if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
@@ -95,6 +96,7 @@ void SYSTEM_stateMachine(void)
         {
             EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
             EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
+            EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             heps.eFuse_msg_ready = true;
         }
         break;
@@ -213,23 +215,15 @@ void SYSTEM_debugPrint(void)
 
     Serial.println("----------------------------------");
 
-    Serial.print("ADCS Roll Rate:  ");
-    Serial.println(hadcs.roll_dot, 6);
+    Serial.print("ADCS Omega:  ");
+    Serial.println(hadcs.telemetry.omega_x, 6);
 
     Serial.print("ADCS Pitch Rate: ");
-    Serial.println(hadcs.pitch_dot, 6);
+    Serial.println(hadcs.telemetry.omega_y, 6);
 
     Serial.print("ADCS Yaw Rate:   ");
-    Serial.println(hadcs.yaw_dot, 6);
+    Serial.println(hadcs.telemetry.omega_z, 6);
 
-    float body_rate_mag = sqrtf(
-        hadcs.roll_dot  * hadcs.roll_dot  +
-        hadcs.pitch_dot * hadcs.pitch_dot +
-        hadcs.yaw_dot   * hadcs.yaw_dot
-    );
-
-    Serial.print("Body Rate Mag:   ");
-    Serial.println(body_rate_mag, 6);
 
     Serial.println("----------------------------------");
 
