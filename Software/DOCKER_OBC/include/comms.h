@@ -106,8 +106,9 @@ typedef enum {
 
 typedef struct {
     COMMS_downlinkState_t state;
+    COMMS_downlinkState_t prev_state;
     bool downlink_active;
-    uint8_t ack_retries;
+    uint16_t ack_retries;
     uint32_t end_ptr;
     uint32_t num_chunks;
 }COMMS_fileHandler_t;

@@ -28,7 +28,6 @@ void ADCS_getTelemetry(void)
     UART_msg_t msg;
     if (UART_receive(&Serial1, &msg, DEFAULT_UART_TIMEOUT_US))
     {
-        Serial.println("ADCS Message Received!");
         ADCS_processPacket(msg.id, msg.payload, msg.length);
     }
 }
@@ -46,7 +45,6 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
     }
     if (id == ADCS_PACKET_TELEMETRY)
     {
-        Serial.println("ADCS Telemetry received");
         if (payload_length < sizeof(ADCS_TelemetryPacket_t))
         {
             Serial.println("ADCS telemetry packet too short");

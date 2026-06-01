@@ -18,7 +18,7 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
 
     //Debug
-    //EPS_debugPrint();
+    EPS_debugPrint();
     //SYSTEM_debugPrint();
     //ADCS_debugPrint();
     //Scheduler_debugPrint();
@@ -85,6 +85,7 @@ void SYSTEM_stateMachine(void)
         {
             EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
             EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
+            EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             heps.eFuse_msg_ready = true;
         }
         if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
@@ -95,6 +96,7 @@ void SYSTEM_stateMachine(void)
         {
             EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
             EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
+            EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             heps.eFuse_msg_ready = true;
         }
         break;

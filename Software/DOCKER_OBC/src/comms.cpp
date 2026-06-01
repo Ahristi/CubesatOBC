@@ -109,15 +109,18 @@ void COMMS_wodDownlinkHandler(void)
             if (COMMS_getLink())
             {
                 Serial.println("Link Received!");
+                hcomms.wod_handler.prev_state = DOWNLINK_IDLE;
                 hcomms.wod_handler.state = DOWNLINK_SEND_INFO;
                 hcomms.wod_handler.end_ptr = wod_meta.write_ptr;
                 hcomms.wod_handler.num_chunks = hcomms.wod_handler.end_ptr - wod_meta.read_ptr;
                 if (hcomms.wod_handler.num_chunks == 0)
                 {
+                    hcomms.wod_handler.prev_state = DOWNLINK_IDLE;
                     hcomms.wod_handler.state = DOWNLINK_COMPLETE;
                 }
                 else
-                {
+                { 
+                    hcomms.wod_handler.prev_state = DOWNLINK_IDLE;
                     hcomms.wod_handler.state = DOWNLINK_SEND_INFO;
                 }
             }
@@ -129,12 +132,17 @@ void COMMS_wodDownlinkHandler(void)
             //I know its a little confusing, but that ID is removed in the uart protocol wrapper, so we also add it in the data payload
             //so that the ground station knows what we are sending it. 
             COMMS_sendFileInfo(WOD_INFO_ID, sizeof(LOGGING_Record_t), hcomms.wod_handler.num_chunks);
+            hcomms.wod_handler.prev_state = DOWNLINK_SEND_INFO;
             hcomms.wod_handler.state = DOWNLINK_WAIT_ACK;
             break;
         }
         case DOWNLINK_SEND_CHUNK:
         {
             COMMS_sendWOD();
+            Serial.println("Sent chunk");
+            Serial.print("Read Pointer: ");
+            Serial.println(wod_meta.read_ptr);
+            hcomms.wod_handler.prev_state = DOWNLINK_SEND_CHUNK;
             hcomms.wod_handler.state = DOWNLINK_WAIT_ACK;
             break;
         }
@@ -142,19 +150,26 @@ void COMMS_wodDownlinkHandler(void)
         {
             if (COMMS_getAck())
             {
+                Serial.println("ACK received");
                 hcomms.wod_handler.ack_retries    = 0;
                 wod_meta.read_ptr++;
+                
                 if (wod_meta.read_ptr > hcomms.wod_handler.end_ptr)
                 {
+                    hcomms.wod_handler.prev_state = DOWNLINK_WAIT_ACK;
                     hcomms.wod_handler.state = DOWNLINK_COMPLETE; 
                 }
                 else
                 {
+                    hcomms.wod_handler.prev_state = DOWNLINK_WAIT_ACK;
                     hcomms.wod_handler.state = DOWNLINK_SEND_CHUNK;
                 }
             }
             else
             {
+                Serial.println("ACK not received");
+                Serial.print("ACK retry: ");
+                Serial.println(hcomms.wod_handler.ack_retries);
                 hcomms.wod_handler.ack_retries++;
                 if (hcomms.wod_handler.ack_retries >= MAX_ACK_RETRIES)
                 {
@@ -162,20 +177,28 @@ void COMMS_wodDownlinkHandler(void)
                     hcomms.wod_handler.downlink_active = false;
                     hcomms.wod_handler.state = DOWNLINK_ERROR;
                 }
+                else
+                {
+                    hcomms.wod_handler.state = hcomms.wod_handler.prev_state;
+                    hcomms.wod_handler.prev_state = DOWNLINK_WAIT_ACK;
+                }
             }
             break;
         }
         case DOWNLINK_COMPLETE:
         {
             //Save the new read pointer to the SD card so we don't resend old data.
+            Serial.println("Downlink Complete");
             LOGGING_saveMetadata(WOD_META_FILE, &wod_meta);
             COMMS_sendEndTransfer();
             hcomms.wod_handler.downlink_active = false;
+            hcomms.wod_handler.prev_state = DOWNLINK_COMPLETE;
             hcomms.wod_handler.state = DOWNLINK_IDLE;
             break;
         }
         case DOWNLINK_ERROR:
         {
+            hcomms.wod_handler.prev_state = DOWNLINK_ERROR;
             hcomms.wod_handler.state = DOWNLINK_IDLE;
             break;
         }

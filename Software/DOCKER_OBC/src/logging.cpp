@@ -30,8 +30,11 @@ void LOGGING_Init()
             satellite_faults.OBC_Faults |= OBC_FAULT_NO_SD_CARD;
         }
     }
-    Serial.println("SD Card Initialised!");
-
+    else
+    {
+        Serial.println("SD Card Initialised!");
+    }
+    
     //Check the RTC
     Wire.beginTransmission(RV3028_ADDR);
     if (Wire.endTransmission() != 0)
@@ -130,6 +133,11 @@ bool LOGGING_getTime(RTC_Time_t *time)
 
 void LOGGING_task()
 {
+    Serial.print("Write Pointer: ");
+    Serial.println(wod_meta.write_ptr);
+    Serial.print("Read Pointer: ");
+    Serial.println(wod_meta.read_ptr);
+
     if (LOGGING_getTime(&RTC_time))
     {
         Serial.printf(
