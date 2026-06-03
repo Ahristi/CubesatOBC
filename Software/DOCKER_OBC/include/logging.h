@@ -90,15 +90,13 @@ typedef struct{
 
 typedef struct __attribute__((packed))
 {
-
-    //EPS Telemetry
     uint16_t year;
     uint8_t  month;
     uint8_t  day;
     uint8_t  hours;
     uint8_t  minutes;
     uint8_t  seconds;
-
+    //EPS Telemetry
     uint16_t rail_3v3_voltage;
     uint16_t rail_3v3_current_ch1;
     uint16_t rail_3v3_current_ch2;
