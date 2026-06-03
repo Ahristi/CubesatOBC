@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 #include "uart.h"
+#include "file.h"
+#include "comms.h"
 #include "logging.h"
-#include "adcs.h"
-#include "eps.h"
 
 //-------------DEFINES--------------
 #define COMMS_BAUDRATE 3000000
@@ -15,27 +15,24 @@
 #define CUBESAT_IDENTIFIER_BYTES 6
 #define BEACON_TIME_STRING_BYTES 32
 
-#define BEACON_MSG_ID   0x65
-#define WOD_INFO_ID     0x66
-#define WOD_REQUEST_ID  0x67
-#define COMMS_ACK_ID    0x68
-#define WOD_RECORD_ID   0x69
-#define END_TRANSFER_ID 0x70
 
+
+#define EXPERIMENT_COMMAND_ID  0x13
+#define RESULT_REQUEST_ID      0x14
+
+#define BEACON_MSG_ID          0x65
+#define WOD_INFO_ID            0x66
+#define WOD_REQUEST_ID         0x67
+#define COMMS_ACK_ID           0x68
+#define CHUNK_ID               0x69
+#define END_TRANSFER_ID        0x70
 
 #define WOD_INFO_BYTES 9
-
-
 #define MAX_ACK_RETRIES 300
 
 
 
 //-------------Typedefs and Enums--------------
-
-
-
-
-
 typedef struct __attribute__((packed)) {
     char utc_time[BEACON_TIME_STRING_BYTES];
     uint8_t identifier[CUBESAT_IDENTIFIER_BYTES];
@@ -88,10 +85,13 @@ typedef struct __attribute__((packed)) {
     uint16_t Comms_Faults;
 }COMMS_BeaconData_t;
 
+
 typedef enum {
     COMMS_IDLE,
     COMMS_WOD_DOWNLINK, 
-    COMMS_PAYLOAD_DOWNLINK,
+    COMMS_RESULTS_DOWNLINK,
+    COMMS_EXPERIMENT_UPLINK,
+    COMMS_COMMAND_UPLINK,
 }COMMS_state_t;
 
 
@@ -107,23 +107,29 @@ typedef enum {
 typedef struct {
     COMMS_downlinkState_t state;
     COMMS_downlinkState_t prev_state;
-    bool downlink_active;
     uint16_t ack_retries;
-    uint32_t end_ptr;
-    uint32_t num_chunks;
-}COMMS_fileHandler_t;
+}COMMS_downlinkHandler_t;
 
+typedef enum {
+    UPLINK_IDLE,
+    UPLINK_RECEIVE_INFO,
+    UPLINK_RECEIVE_CHUNK,
+    UPLINK_SEND_ACK,
+    UPLINK_COMPLETE,
+    UPLINK_ERROR
+}COMMS_uplinkState_t;
+
+
+typedef struct {
+    COMMS_uplinkState_t state;
+    COMMS_uplinkState_t prev_state;
+}COMMS_uplinkHandler_t;
 
 
 typedef struct{
     uint32_t beacon_tick;
-    COMMS_fileHandler_t wod_handler;
-    COMMS_fileHandler_t results_handler;
+    COMMS_state_t state;
 }COMMS_Handler_t;
-
-
-
-
 
 extern COMMS_Handler_t hcomms;
 
@@ -137,9 +143,10 @@ void COMMS_downLinkHandler(void);
 void COMMS_startDownlink(const char *filename, uint16_t file_id);
 void COMMS_wodDownlinkHandler(void);
 void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks);
-void COMMS_sendNextFileChunk(void);
-bool COMMS_getLink(void);
+bool COMMS_getLink(COMMS_Handler_t* hcomms);
 bool COMMS_sendWOD(void);
 bool COMMS_getAck(void);
 bool COMMS_sendEndTransfer(void);
+void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink);
+bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
 #endif

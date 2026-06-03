@@ -1,31 +1,53 @@
 #include "comms.h"
 #include <Arduino.h>
 
-
 COMMS_Handler_t hcomms;
+COMMS_downlinkHandler_t hdownlink_wod;
+COMMS_downlinkHandler_t hdownlink_results;
+COMMS_uplinkHandler_t huplink_experiment;
+
 
 void COMMS_Init(void)
 {
     Serial3.begin(COMMS_BAUDRATE);
     Serial.println("COMMS UART initialised on Serial3");
     hcomms.beacon_tick = 0;
-    hcomms.wod_handler.state = DOWNLINK_IDLE;
-    hcomms.wod_handler.ack_retries     = 0;
-    hcomms.wod_handler.downlink_active = false;
+    hcomms.state = COMMS_IDLE;
+    hdownlink_wod.state = DOWNLINK_IDLE;
+    hdownlink_wod.prev_state = DOWNLINK_IDLE;
 }
 
 void COMMS_task()
 {
-    COMMS_wodDownlinkHandler();
-    if (!hcomms.wod_handler.downlink_active)
+    switch (hcomms.state)
     {
-        hcomms.beacon_tick++;
-        if (hcomms.beacon_tick >= BEACON_TICK_OC)
+        case COMMS_IDLE:
         {
-            hcomms.beacon_tick = 0;
-            COMMS_sendBeacon();
+            if (!COMMS_getLink(&hcomms))
+            {
+                hcomms.beacon_tick++;
+                if (hcomms.beacon_tick >= BEACON_TICK_OC)
+                {
+                    hcomms.beacon_tick = 0;
+                    COMMS_sendBeacon();
+                }
+                break;
+            }
         }
+        case COMMS_WOD_DOWNLINK:
+        {
+            COMMS_downlink(&wod, &hdownlink_wod);
+            break;
+        }
+        default:
+        {
+            hcomms.state = COMMS_IDLE;
+            break;
+        }
+
     }
+
+    
     return;
 }
 
@@ -100,118 +122,7 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
 }
 
 
-void COMMS_wodDownlinkHandler(void)
-{
-    switch (hcomms.wod_handler.state)
-    {
-        case DOWNLINK_IDLE:
-        {
-            if (COMMS_getLink())
-            {
-                Serial.println("Link Received!");
-                hcomms.wod_handler.prev_state = DOWNLINK_IDLE;
-                hcomms.wod_handler.state = DOWNLINK_SEND_INFO;
-                hcomms.wod_handler.end_ptr = wod_meta.write_ptr;
-                hcomms.wod_handler.num_chunks = hcomms.wod_handler.end_ptr - wod_meta.read_ptr;
-                if (hcomms.wod_handler.num_chunks == 0)
-                {
-                    hcomms.wod_handler.prev_state = DOWNLINK_IDLE;
-                    hcomms.wod_handler.state = DOWNLINK_COMPLETE;
-                }
-                else
-                { 
-                    hcomms.wod_handler.prev_state = DOWNLINK_IDLE;
-                    hcomms.wod_handler.state = DOWNLINK_SEND_INFO;
-                }
-            }
-            break;
-        }
-        case DOWNLINK_SEND_INFO:
-        {
-            //Note: The uart message uses the same ID that is sent in the payload from the WOD_INFO_ID define.
-            //I know its a little confusing, but that ID is removed in the uart protocol wrapper, so we also add it in the data payload
-            //so that the ground station knows what we are sending it. 
-            COMMS_sendFileInfo(WOD_INFO_ID, sizeof(LOGGING_Record_t), hcomms.wod_handler.num_chunks);
-            hcomms.wod_handler.prev_state = DOWNLINK_SEND_INFO;
-            hcomms.wod_handler.state = DOWNLINK_WAIT_ACK;
-            break;
-        }
-        case DOWNLINK_SEND_CHUNK:
-        {
-            COMMS_sendWOD();
-            Serial.println("Sent chunk");
-            Serial.print("Read Pointer: ");
-            Serial.println(wod_meta.read_ptr);
-            hcomms.wod_handler.prev_state = DOWNLINK_SEND_CHUNK;
-            hcomms.wod_handler.state = DOWNLINK_WAIT_ACK;
-            break;
-        }
-        case DOWNLINK_WAIT_ACK:
-        {
-            if (COMMS_getAck())
-            {
-                Serial.println("ACK received");
-                hcomms.wod_handler.ack_retries    = 0;
-                wod_meta.read_ptr++;
-                
-                if (wod_meta.read_ptr > hcomms.wod_handler.end_ptr)
-                {
-                    hcomms.wod_handler.prev_state = DOWNLINK_WAIT_ACK;
-                    hcomms.wod_handler.state = DOWNLINK_COMPLETE; 
-                }
-                else
-                {
-                    hcomms.wod_handler.prev_state = DOWNLINK_WAIT_ACK;
-                    hcomms.wod_handler.state = DOWNLINK_SEND_CHUNK;
-                }
-            }
-            else
-            {
-                Serial.println("ACK not received");
-                Serial.print("ACK retry: ");
-                Serial.println(hcomms.wod_handler.ack_retries);
-                hcomms.wod_handler.ack_retries++;
-                if (hcomms.wod_handler.ack_retries >= MAX_ACK_RETRIES)
-                {
-                    hcomms.wod_handler.ack_retries    = 0;
-                    hcomms.wod_handler.downlink_active = false;
-                    hcomms.wod_handler.state = DOWNLINK_ERROR;
-                }
-                else
-                {
-                    hcomms.wod_handler.state = hcomms.wod_handler.prev_state;
-                    hcomms.wod_handler.prev_state = DOWNLINK_WAIT_ACK;
-                }
-            }
-            break;
-        }
-        case DOWNLINK_COMPLETE:
-        {
-            //Save the new read pointer to the SD card so we don't resend old data.
-            Serial.println("Downlink Complete");
-            LOGGING_saveMetadata(WOD_META_FILE, &wod_meta);
-            COMMS_sendEndTransfer();
-            hcomms.wod_handler.downlink_active = false;
-            hcomms.wod_handler.prev_state = DOWNLINK_COMPLETE;
-            hcomms.wod_handler.state = DOWNLINK_IDLE;
-            break;
-        }
-        case DOWNLINK_ERROR:
-        {
-            hcomms.wod_handler.prev_state = DOWNLINK_ERROR;
-            hcomms.wod_handler.state = DOWNLINK_IDLE;
-            break;
-        }
-        default:
-        {
-            hcomms.wod_handler.state = DOWNLINK_IDLE;
-            break;
-        }
-    }
-}
-
-
-bool COMMS_getLink(void)
+bool COMMS_getLink(COMMS_Handler_t* hcomms)
 {
     UART_msg_t msg;
     if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
@@ -225,7 +136,17 @@ bool COMMS_getLink(void)
 
         if ((msg.id == WOD_REQUEST_ID))
         {
-            hcomms.wod_handler.downlink_active = true;
+            hcomms->state = COMMS_WOD_DOWNLINK;
+            return true;
+        }
+        else if (msg.id == EXPERIMENT_COMMAND_ID)
+        {
+            hcomms->state = COMMS_EXPERIMENT_UPLINK;
+            return true;
+        }
+        else if (msg.id == RESULT_REQUEST_ID)
+        {
+            hcomms->state = COMMS_RESULTS_DOWNLINK;
             return true;
         }
         else
@@ -284,21 +205,9 @@ void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks
     Serial.println("Sent WOD INFO");
 }
 
-bool COMMS_sendWOD(void)
-{
-    UART_msg_t msg;
-    LOGGING_Record_t record;
-    if(!LOGGING_readWODRecord(wod_meta.read_ptr, &record))
-    {
-        return false;
-    }
-    msg.sof = UART_SOF;
-    msg.id  = WOD_RECORD_ID;
-    msg.length = sizeof(LOGGING_Record_t);
-    memcpy(msg.payload, &record, sizeof(LOGGING_Record_t));
-    UART_transmit(&Serial3, &msg);
-    return true;
-}
+
+
+
 bool COMMS_sendEndTransfer(void)
 {
     UART_msg_t msg;
@@ -306,6 +215,164 @@ bool COMMS_sendEndTransfer(void)
     msg.id  = END_TRANSFER_ID;
     msg.length = 1;
     msg.payload[0] = END_TRANSFER_ID; //Send end transfer ID in the payload as well.
+    UART_transmit(&Serial3, &msg);
+    return true;
+}
+
+//-----------BEGIN ABSTRACTED COMMS-----------
+
+
+
+void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
+{
+    switch (hdownlink->state)
+    {
+        case DOWNLINK_IDLE:
+        {
+            if (hfile->metadata.read_ptr == hfile->metadata.num_chunks)
+            {
+                hdownlink->prev_state = DOWNLINK_IDLE;
+                hdownlink->state = DOWNLINK_COMPLETE;
+            }
+            else
+            { 
+                hdownlink->prev_state = DOWNLINK_IDLE;
+                hdownlink->state = DOWNLINK_SEND_INFO;
+            }
+            break;
+        }
+        case DOWNLINK_SEND_INFO:
+        {
+            uint32_t num_packets = hfile->metadata.num_chunks -  hfile->metadata.read_ptr;
+            COMMS_sendFileInfo(hfile->metadata.ID,  hfile->metadata.chunk_size, num_packets);
+            hdownlink->prev_state = DOWNLINK_SEND_INFO;
+            hdownlink->state = DOWNLINK_WAIT_ACK;
+            break;
+        }
+        case DOWNLINK_SEND_CHUNK:
+        {
+            uint8_t chunk_size = hfile->metadata.chunk_size;
+            uint8_t chunk[MAX_CHUNK_SIZE];
+
+            if (chunk_size > MAX_CHUNK_SIZE)
+            {
+                Serial.println("ERROR: Chunk exceeds max chunk size");
+                hdownlink->state = DOWNLINK_ERROR;
+                break;
+            }
+
+            size_t bytes_read = FILE_read(hfile, chunk);
+
+            if (bytes_read == 0 || bytes_read > UINT8_MAX)
+            {
+                Serial.println("ERROR: No bytes read");
+                hdownlink->state = DOWNLINK_ERROR;
+                break;
+            }
+
+            COMMS_sendPacket(CHUNK_ID, chunk, (uint8_t)bytes_read);
+
+            Serial.println("Sent chunk");
+            Serial.print("Read Pointer: ");
+            Serial.println(hfile->metadata.read_ptr);
+
+            hdownlink->prev_state = DOWNLINK_SEND_CHUNK;
+            hdownlink->state = DOWNLINK_WAIT_ACK;
+            break;
+        }
+        case DOWNLINK_WAIT_ACK:
+        {
+            if (COMMS_getAck())
+            {
+                Serial.println("ACK received");
+                hdownlink->ack_retries = 0;
+
+                if (hdownlink->prev_state == DOWNLINK_SEND_INFO)
+                {
+                    hdownlink->prev_state = DOWNLINK_WAIT_ACK;
+                    hdownlink->state = DOWNLINK_SEND_CHUNK;
+                }
+                else if (hdownlink->prev_state == DOWNLINK_SEND_CHUNK)
+                {
+                    hfile->metadata.read_ptr++;
+
+                    if (hfile->metadata.read_ptr >= hfile->metadata.num_chunks)
+                    {
+                        hdownlink->prev_state = DOWNLINK_WAIT_ACK;
+                        hdownlink->state = DOWNLINK_COMPLETE;
+                    }
+                    else
+                    {
+                        hdownlink->prev_state = DOWNLINK_WAIT_ACK;
+                        hdownlink->state = DOWNLINK_SEND_CHUNK;
+                    }
+                }
+                else if (hdownlink->prev_state == DOWNLINK_COMPLETE)
+                {
+                        hdownlink->prev_state = DOWNLINK_WAIT_ACK;
+                        hdownlink->state = DOWNLINK_IDLE;
+                        hcomms.state = COMMS_IDLE;
+                }
+            }
+            else
+            {
+                Serial.println("ACK not received");
+                Serial.print("ACK retry: ");
+                Serial.println(hdownlink->ack_retries);
+                hdownlink->ack_retries++;
+                if (hdownlink->ack_retries >= MAX_ACK_RETRIES)
+                {
+                    Serial.println("ERROR: Exceeded max retries");
+                    hdownlink->ack_retries    = 0;
+                    hdownlink->state = DOWNLINK_ERROR;
+                }
+                else
+                {
+                    hdownlink->state = hdownlink->prev_state;
+                    hdownlink->prev_state = DOWNLINK_WAIT_ACK;
+                }
+            }
+            break;
+        }
+        case DOWNLINK_COMPLETE:
+        {
+            //Save the new read pointer to the SD card so we don't resend old data.
+            Serial.println("Downlink Complete");
+            FILE_writeMetadata(hfile);
+            COMMS_sendEndTransfer();
+            hdownlink->prev_state = DOWNLINK_COMPLETE;
+            hdownlink->state = DOWNLINK_WAIT_ACK;
+            break;
+        }
+        case DOWNLINK_ERROR:
+        {
+            Serial.println("Downlink ERROR");
+            FILE_writeMetadata(hfile);
+            hdownlink->prev_state = DOWNLINK_ERROR;
+            hdownlink->state = DOWNLINK_IDLE;
+            hcomms.state = COMMS_IDLE;
+            break;
+        }
+        default:
+        {
+            hdownlink->state = DOWNLINK_IDLE;
+            hcomms.state = COMMS_IDLE;
+            break;
+        }
+    }
+}
+
+
+bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length)
+{
+    UART_msg_t msg = {0};
+    msg.sof    = UART_SOF;
+    msg.id     = id;
+    msg.length = length;
+    if (length > 0 && payload != NULL)
+    {
+        memcpy(msg.payload, payload, length);
+    }
     UART_transmit(&Serial3, &msg);
     return true;
 }
