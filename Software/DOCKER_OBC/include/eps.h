@@ -15,6 +15,7 @@
 #define EPS_12V_TELEMETRY_ID            0x323
 #define EPS_BMS_TELEMETRY_ID            0x324
 #define EPS_SYS_TELEMETRY_ID            0x325
+#define EPS_MPPT_TELEMETRY_ID           0x326
 
 #define MASK_3V3_CH2_EN (1U)<<0
 #define MASK_5V_CH1_EN  (1U)<<1
@@ -25,6 +26,7 @@
 
 #define LEN_RAIL_TELEM 6
 #define LEN_BMS_TELEM  8
+#define LEN_MPPT_TELEM 8
 #define LEN_SYS_TELEM  3
 //-------------Typedef and Enums-------------
 typedef struct{
@@ -55,6 +57,7 @@ void EPS_task(void);
 void EPS_RailTelemHandle(RailTelemetry_t* railTelem, uint8_t* buf, uint8_t len);
 void EPS_BMSTelemHandle(uint8_t* buf, uint8_t len);
 void EPS_SYSTelemHandle(uint8_t* buf, uint8_t len);
+void EPS_MPPTTelemHandle(uint8_t* buf, uint8_t len);
 void EPS_printRailTelemetry(const char* name, const RailTelemetry_t* rail);
 void EPS_debugPrint(void);
 void EPS_updateEfuses(void);

@@ -43,7 +43,8 @@ void CAN_Init()
 
     Can0.setMBFilter(MB1,
         EPS_BMS_TELEMETRY_ID,
-        EPS_SYS_TELEMETRY_ID
+        EPS_SYS_TELEMETRY_ID,
+        EPS_MPPT_TELEMETRY_ID
     );
 
     Serial.println("CAN3 initialized");

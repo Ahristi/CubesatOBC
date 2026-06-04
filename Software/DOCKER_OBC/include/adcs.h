@@ -2,7 +2,7 @@
 #define ADCS_H
 #include <stdint.h>
 #include "uart.h"
-#include "logging.h"
+
 
 //-------------Defines-------------
 #define DETUMBLE_RATE_THRESHOLD 0.1 
@@ -82,6 +82,15 @@ typedef struct {
     float it1;
     float it2;
     float it3;
+
+    float x_mag_field_filt;
+    float y_mag_field_filt;
+    float z_mag_field_filt;
+
+    float x_mag_field_sense;
+    float y_mag_field_sense;
+    float z_mag_field_sense;    
+
 
     float detumble_scale;
     uint16_t faults;
