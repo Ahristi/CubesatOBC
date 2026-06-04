@@ -10,8 +10,8 @@ void ADCS_Init(void)
     hadcs.orbital_parameters_ready = false;
     hadcs.detumble_command_ready   = false;
     hadcs.pointing_command_ready   = false;
-    Serial1.begin(ADCS_BAUDRATE);
-    Serial.println("ADCS UART initialised on Serial1");
+    Serial5.begin(ADCS_BAUDRATE);
+    Serial.println("ADCS UART initialised on Serial5");
 }
 
 void ADCS_task(void)
@@ -26,8 +26,9 @@ void ADCS_task(void)
 void ADCS_getTelemetry(void)
 {
     UART_msg_t msg;
-    if (UART_receive(&Serial1, &msg, DEFAULT_UART_TIMEOUT_US))
+    if (UART_receive(&Serial5, &msg, DEFAULT_UART_TIMEOUT_US))
     {
+        Serial.println("ADCS Packet received");
         ADCS_processPacket(msg.id, msg.payload, msg.length);
     }
 }
@@ -51,6 +52,7 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
             return;
         }
         memcpy(&hadcs.telemetry, payload, sizeof(ADCS_TelemetryPacket_t));
+        //memcpy(&ADCS_telemetry, payload, sizeof(ADCS_TelemetryPacket_t));      
         Serial.println("ADCS telemetry updated");
     }
 }
@@ -79,7 +81,7 @@ void ADCS_updateAttitude(void)
         msg.id     = ADCS_ATTITUDE_UPDATE_ID;
         msg.length = sizeof(ADCS_attitudeCommand_t);
         memcpy(msg.payload, &hadcs.attitude_command, sizeof(ADCS_attitudeCommand_t));
-        UART_transmit(&Serial1, &msg);
+        UART_transmit(&Serial5, &msg);
         Serial.println("Sent attitude command");
     }
 }
@@ -93,7 +95,7 @@ void ADCS_updateOrbitalParameters(void)
         msg.id     = ADCS_ORBIT_UPDATE_ID;
         msg.length = ADCS_ORBIT_UPDATE_BYTES;
         memcpy(msg.payload, &hadcs.orbital_parameters, sizeof(ADCS_orbitalParameters_t));
-        UART_transmit(&Serial1, &msg);
+        UART_transmit(&Serial5, &msg);
     }
 }
 void ADCS_telemetryHandle(void)
