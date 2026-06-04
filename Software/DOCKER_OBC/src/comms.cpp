@@ -183,29 +183,18 @@ bool COMMS_getAck(void)
     }
     return false;
 }
-
-void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks)
+bool COMMS_sendAck(void)
 {
-    UART_msg_t msg;
-    uint8_t data[WOD_INFO_BYTES];
+    UART_msg_t msg = {0};
 
     msg.sof    = UART_SOF;
-    msg.id     = WOD_INFO_ID;
-    msg.length = WOD_INFO_BYTES;
-
-    data[0] = fileID;
-
-    memcpy(&data[1], &chunk_size, sizeof(uint32_t));
-    memcpy(&data[5], &num_chunks, sizeof(uint32_t));
-
-    memcpy(msg.payload, data, WOD_INFO_BYTES);
+    msg.id     = COMMS_ACK_ID;
+    msg.length = 0;
 
     UART_transmit(&Serial3, &msg);
 
-    Serial.println("Sent WOD INFO");
+    return true;
 }
-
-
 
 
 bool COMMS_sendEndTransfer(void)
@@ -363,6 +352,144 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
 }
 
 
+
+void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
+{
+    switch (huplink->state)
+    {
+        case UPLINK_IDLE:
+        {
+
+            huplink->prev_state = UPLINK_IDLE;
+            huplink->state = UPLINK_RECEIVE_INFO;
+            break;
+        }
+        case UPLINK_RECEIVE_INFO:
+        {
+            if (COMMS_receiveFileInfo(hfile))
+            {
+                FILE_open(hfile, FILE_OPEN_FOR_READ);
+                huplink->prev_state = UPLINK_RECEIVE_INFO;
+                huplink->state = UPLINK_SEND_ACK;
+            }
+            else
+            {
+                Serial.println("File info not received");
+            }
+            break;
+        }
+        case UPLINK_RECEIVE_CHUNK:
+        {
+            uint8_t packet[MAX_CHUNK_SIZE];
+            uint8_t length;
+            if (COMMS_receivePacket(packet, &length))
+            {
+                if (length != hfile->metadata.chunk_size)
+                {
+                    huplink->prev_state = UPLINK_RECEIVE_CHUNK;
+                    huplink->state = UPLINK_ERROR;
+                }
+                else
+                {
+                    FILE_write(hfile, packet, hfile->metadata.num_chunks);
+                    hfile->metadata.num_chunks++;
+                    huplink->prev_state = UPLINK_RECEIVE_CHUNK;
+                    huplink->state = UPLINK_SEND_ACK;
+                }
+            }
+            else 
+            {
+                huplink->timeout_ctr++;
+                if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
+                {
+                    huplink->timeout_ctr = 0;
+                    huplink->prev_state = UPLINK_RECEIVE_CHUNK;
+                    huplink->state = UPLINK_ERROR;
+                }
+            }
+            break;
+        }
+        case UPLINK_SEND_ACK:
+        {
+            COMMS_sendAck();
+            if (hfile->metadata.num_chunks == huplink->file_chunks)
+            {
+                huplink->prev_state = UPLINK_SEND_ACK;
+                huplink->state = UPLINK_COMPLETE;
+            }
+            else if (huplink->prev_state == UPLINK_RECEIVE_INFO)
+            {
+                huplink->prev_state = UPLINK_SEND_ACK;
+                huplink->state = UPLINK_RECEIVE_INFO;
+            }
+            break;
+        }
+        case UPLINK_COMPLETE:
+        {
+
+            break;
+        }
+        case UPLINK_ERROR:
+        {
+
+            break;
+        }
+        default:
+        {
+
+            break;
+        }
+    }
+
+}
+
+
+
+bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
+{
+    UART_msg_t msg;
+    if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    {
+        return false;
+    }
+    if (msg.id != UPLINK_FILE_INFO_ID)
+    {
+        return false;
+    }
+    if (msg.length <  FILE_INFO_BYTES)
+    {
+        return false;
+    }
+    if (msg.payload[0] != hfile->metadata.ID)
+    {
+        return false;
+    }
+    memcpy(&hfile->metadata.chunk_size, &msg.payload[1], sizeof(uint32_t));
+    memcpy(&huplink->file_chunks, &msg.payload[5], sizeof(uint32_t));
+    return true;
+}
+
+void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks)
+{
+    UART_msg_t msg;
+    uint8_t data[WOD_INFO_BYTES];
+
+    msg.sof    = UART_SOF;
+    msg.id     = WOD_INFO_ID;
+    msg.length = WOD_INFO_BYTES;
+
+    data[0] = fileID;
+
+    memcpy(&data[1], &chunk_size, sizeof(uint32_t));
+    memcpy(&data[5], &num_chunks, sizeof(uint32_t));
+
+    memcpy(msg.payload, data, WOD_INFO_BYTES);
+
+    UART_transmit(&Serial3, &msg);
+
+    Serial.println("Sent WOD INFO");
+}
+
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length)
 {
     UART_msg_t msg = {0};
@@ -374,5 +501,36 @@ bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length)
         memcpy(msg.payload, payload, length);
     }
     UART_transmit(&Serial3, &msg);
+    return true;
+}
+
+bool COMMS_receivePacket(uint8_t *payload, uint8_t *length)
+{
+    UART_msg_t msg = {0};
+    if (payload == NULL || length == NULL)
+    {
+        return false;
+    }
+    if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    {
+        return false;
+    }
+    if (msg.sof != UART_SOF)
+    {
+        return false;
+    }
+    if (msg.length > RX_BUFFER_BYTES)
+    {
+        return false;
+    }
+    if (msg.id != CHUNK_ID)
+    {
+        return false;
+    }
+    *length = msg.length;
+    if (msg.length > 0)
+    {
+        memcpy(payload, msg.payload, msg.length);
+    }
     return true;
 }

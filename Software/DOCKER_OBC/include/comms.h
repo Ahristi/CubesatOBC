@@ -27,9 +27,13 @@
 #define CHUNK_ID               0x69
 #define END_TRANSFER_ID        0x70
 
-#define WOD_INFO_BYTES 9
-#define MAX_ACK_RETRIES 300
+#define UPLINK_FILE_INFO_ID    0x75
 
+
+#define WOD_INFO_BYTES  9
+#define FILE_INFO_BYTES 9
+#define MAX_ACK_RETRIES 300
+#define UPLINK_TIMEOUT  300
 
 
 //-------------Typedefs and Enums--------------
@@ -76,6 +80,16 @@ typedef struct __attribute__((packed)) {
     float    x_mag_current;
     float    y_mag_current;
     float    z_mag_current;
+    
+    float    x_mag_field_filt;
+    float    y_mag_field_filt;
+    float    z_mag_field_filt;
+
+    float    x_mag_field_sense;
+    float    y_mag_field_sense;
+    float    z_mag_field_sense;
+
+
     float    detumble_scale;
     
     uint16_t EPS_Faults;
@@ -123,6 +137,8 @@ typedef enum {
 typedef struct {
     COMMS_uplinkState_t state;
     COMMS_uplinkState_t prev_state;
+    uint16_t timeout_ctr;
+    uint32_t file_chunks;
 }COMMS_uplinkHandler_t;
 
 
@@ -146,7 +162,10 @@ void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks
 bool COMMS_getLink(COMMS_Handler_t* hcomms);
 bool COMMS_sendWOD(void);
 bool COMMS_getAck(void);
+bool COMMS_sendAck(void);
 bool COMMS_sendEndTransfer(void);
 void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink);
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
+bool COMMS_receivePacket(uint8_t *payload, uint8_t *length);
+bool COMMS_receiveFileInfo(FILE_Handler_t* hfile);
 #endif

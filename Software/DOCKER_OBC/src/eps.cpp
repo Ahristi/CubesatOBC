@@ -30,6 +30,9 @@ void EPS_task()
         case EPS_SYS_TELEMETRY_ID:
             EPS_SYSTelemHandle(rxFrame.buf, rxFrame.len);
             break;
+        case EPS_MPPT_TELEMETRY_ID:
+            EPS_MPPTTelemHandle(rxFrame.buf, rxFrame.len);
+            break;
         default:
             break;
         }
@@ -69,6 +72,7 @@ void EPS_BMSTelemHandle(uint8_t* buf, uint8_t len)
         EPS_telemetry.charger_die_temp = buf[7];
     }
 }
+
 void EPS_SYSTelemHandle(uint8_t* buf, uint8_t len)
 {
     if (len < LEN_SYS_TELEM)
@@ -82,6 +86,21 @@ void EPS_SYSTelemHandle(uint8_t* buf, uint8_t len)
         EPS_telemetry.mcu_temp         = buf[2];
     }
 }
+void EPS_MPPTTelemHandle(uint8_t* buf, uint8_t len)
+{
+    if (len < LEN_MPPT_TELEM)
+    {
+        return;
+    }
+    else
+    {
+        EPS_telemetry.mppt1_voltage    = buf[0]<< 8 |  buf[1];
+        EPS_telemetry.mppt1_current    = buf[2]<< 8 |  buf[3];
+        EPS_telemetry.mppt2_voltage    = buf[4]<< 8 |  buf[5];
+        EPS_telemetry.mppt2_current    = buf[6]<< 8 |  buf[7];
+    }    
+}
+
 void EPS_updateEfuses(void)
 {
     uint8_t ID = EPS_EFUSE_CONTROL_CMD_ID;
