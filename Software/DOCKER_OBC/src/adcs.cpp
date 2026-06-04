@@ -189,6 +189,26 @@ void ADCS_debugPrint(void)
     Serial.print("  Torquer 3  : ");
     Serial.println(hadcs.telemetry.it1, 6);
 
+
+    Serial.println("Field Measurements:");
+    Serial.print("  x Field Sense  : ");
+    Serial.println(hadcs.telemetry.x_mag_field_sense, 6);
+
+    Serial.print("  y Field Sense  : ");
+    Serial.println(hadcs.telemetry.y_mag_field_sense, 6);
+
+    Serial.print("  z Field Sense  : ");
+    Serial.println(hadcs.telemetry.z_mag_field_sense, 6);
+
+    Serial.print("  x Field Filt  : ");
+    Serial.println(hadcs.telemetry.x_mag_field_filt, 6);
+
+    Serial.print("  y Field Filt  : ");
+    Serial.println(hadcs.telemetry.y_mag_field_filt, 6);
+
+    Serial.print("  z Field Filt  : ");
+    Serial.println(hadcs.telemetry.z_mag_field_filt, 6);
+
     Serial.println();
 
     Serial.println("Commands:");

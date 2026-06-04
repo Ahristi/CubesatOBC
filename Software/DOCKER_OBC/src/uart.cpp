@@ -18,7 +18,7 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
         }
 
         byte = port->read();
-
+        
         // Reset inter-byte timeout whenever progress is made
         last_byte_time = micros();
 

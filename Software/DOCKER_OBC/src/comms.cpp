@@ -114,6 +114,12 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->x_mag_current         = ADCS_telemetry.x_mag_current;
     data->y_mag_current         = ADCS_telemetry.y_mag_current;
     data->z_mag_current         = ADCS_telemetry.z_mag_current;
+    data->x_mag_field_sense     = ADCS_telemetry.x_mag_field_sense;    
+    data->y_mag_field_sense     = ADCS_telemetry.y_mag_field_sense;
+    data->z_mag_field_sense     = ADCS_telemetry.z_mag_field_sense;    
+    data->x_mag_field_filt      = ADCS_telemetry.x_mag_field_filt;
+    data->y_mag_field_filt      = ADCS_telemetry.y_mag_field_filt;
+    data->z_mag_field_filt      = ADCS_telemetry.z_mag_field_filt;
     data->EPS_Faults            = satellite_faults.EPS_Faults;
     data->OBC_Faults            = satellite_faults.OBC_Faults;
     data->ADCS_Faults           = satellite_faults.ADCS_Faults;

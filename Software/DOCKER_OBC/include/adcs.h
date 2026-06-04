@@ -65,7 +65,7 @@ typedef enum{
 
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     float roll;
     float pitch;
     float yaw;
