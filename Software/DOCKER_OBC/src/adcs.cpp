@@ -1,4 +1,5 @@
 #include "adcs.h"
+#include "adcs_command.h"
 #include "logging.h"
 #include <Arduino.h>
 #include "logging.h"
