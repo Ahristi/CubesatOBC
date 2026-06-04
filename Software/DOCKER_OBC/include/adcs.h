@@ -2,7 +2,7 @@
 #define ADCS_H
 #include <stdint.h>
 #include "uart.h"
-#include "logging.h"
+// #include "logging.h"
 
 //-------------Defines-------------
 #define DETUMBLE_RATE_THRESHOLD 0.1 

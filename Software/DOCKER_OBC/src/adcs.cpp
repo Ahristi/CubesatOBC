@@ -98,30 +98,30 @@ void ADCS_updateOrbitalParameters(void)
         UART_transmit(&Serial5, &msg);
     }
 }
-void ADCS_telemetryHandle(void)
-{
-    /*
-        This is a weird way of doing it since we copy the same values between like 4 structs.
-        I was thinking of binning the ADCS_telemetry struct since its effectively the same as hadcs.
-        But I want it to be consistent with the way telemetry is handled with the EPS so just doing this.   
-        Right now the data flows like this:
-        UART_msg->hadcs->ADCS_telemetry->logging_record_t->SD Card/WOD.
-    */
-    ADCS_telemetry.roll           = hadcs.telemetry.roll;   
-    ADCS_telemetry.pitch          = hadcs.telemetry.pitch;  
-    ADCS_telemetry.yaw            = hadcs.telemetry.yaw; 
-    ADCS_telemetry.omega_x        = hadcs.telemetry.omega_x;
-    ADCS_telemetry.omega_y        = hadcs.telemetry.omega_y;
-    ADCS_telemetry.omega_z        = hadcs.telemetry.omega_z;
-    ADCS_telemetry.x_rw_speed     = hadcs.telemetry.rw1;    
-    ADCS_telemetry.y_rw_speed     = hadcs.telemetry.rw2;    
-    ADCS_telemetry.z_rw_speed     = hadcs.telemetry.rw3;    
-    ADCS_telemetry.x_mag_current  = hadcs.telemetry.it1;    
-    ADCS_telemetry.y_mag_current  = hadcs.telemetry.it2;    
-    ADCS_telemetry.z_mag_current  = hadcs.telemetry.it3;    
-    ADCS_telemetry.detumble_scale = hadcs.telemetry.detumble_scale;
-    ADCS_telemetry.faults         = hadcs.telemetry.faults;
-}
+// void ADCS_telemetryHandle(void)
+// {
+//     /*
+//         This is a weird way of doing it since we copy the same values between like 4 structs.
+//         I was thinking of binning the ADCS_telemetry struct since its effectively the same as hadcs.
+//         But I want it to be consistent with the way telemetry is handled with the EPS so just doing this.   
+//         Right now the data flows like this:
+//         UART_msg->hadcs->ADCS_telemetry->logging_record_t->SD Card/WOD.
+//     */
+//     ADCS_telemetry.roll           = hadcs.telemetry.roll;   
+//     ADCS_telemetry.pitch          = hadcs.telemetry.pitch;  
+//     ADCS_telemetry.yaw            = hadcs.telemetry.yaw; 
+//     ADCS_telemetry.omega_x        = hadcs.telemetry.omega_x;
+//     ADCS_telemetry.omega_y        = hadcs.telemetry.omega_y;
+//     ADCS_telemetry.omega_z        = hadcs.telemetry.omega_z;
+//     ADCS_telemetry.x_rw_speed     = hadcs.telemetry.rw1;    
+//     ADCS_telemetry.y_rw_speed     = hadcs.telemetry.rw2;    
+//     ADCS_telemetry.z_rw_speed     = hadcs.telemetry.rw3;    
+//     ADCS_telemetry.x_mag_current  = hadcs.telemetry.it1;    
+//     ADCS_telemetry.y_mag_current  = hadcs.telemetry.it2;    
+//     ADCS_telemetry.z_mag_current  = hadcs.telemetry.it3;    
+//     ADCS_telemetry.detumble_scale = hadcs.telemetry.detumble_scale;
+//     ADCS_telemetry.faults         = hadcs.telemetry.faults;
+// }
 
 
 
