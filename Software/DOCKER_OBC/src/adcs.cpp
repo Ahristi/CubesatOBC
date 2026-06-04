@@ -1,4 +1,5 @@
 #include "adcs.h"
+#include "logging.h"
 #include <Arduino.h>
  
 ADCS_Handler_t hadcs;
