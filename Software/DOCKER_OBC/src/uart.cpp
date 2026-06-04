@@ -18,7 +18,6 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
         }
 
         byte = port->read();
-        
         // Reset inter-byte timeout whenever progress is made
         last_byte_time = micros();
 
@@ -60,7 +59,6 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
             case UART_RX_READ_PAYLOAD:
             {
                 msg->payload[idx++] = byte;
-
                 if (idx >= msg->length)
                 {
                     state = UART_RX_READ_CRC;
@@ -72,6 +70,7 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
             {
                 msg->crc |= ((uint16_t)byte << (8 * crc_idx));
                 crc_idx++;
+                Serial.println("CRC");
 
                 if (crc_idx == RX_CRC_BYTES)
                 {
@@ -87,7 +86,6 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
             }
         }
     }
-
     return false;
 }
 
