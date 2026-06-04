@@ -10,7 +10,7 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
 
     uint32_t last_byte_time = micros();
 
-    while ((uint32_t)(micros() -  ) < timeout_us)
+    while ((uint32_t)(micros() -  last_byte_time) < timeout_us)
     {
         if (!port->available())
         {
