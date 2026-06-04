@@ -39,6 +39,11 @@ void COMMS_task()
             COMMS_downlink(&wod, &hdownlink_wod);
             break;
         }
+        case COMMS_EXPERIMENT_UPLINK:
+        {
+            COMMS_uplink(&hpayload.experiment_file, &huplink_experiment);
+            break;
+        }
         default:
         {
             hcomms.state = COMMS_IDLE;
@@ -46,8 +51,6 @@ void COMMS_task()
         }
 
     }
-
-    
     return;
 }
 
@@ -205,13 +208,40 @@ bool COMMS_sendAck(void)
 
 bool COMMS_sendEndTransfer(void)
 {
-    UART_msg_t msg;
+    UART_msg_t msg = {0};
+
     msg.sof = UART_SOF;
     msg.id  = END_TRANSFER_ID;
     msg.length = 1;
-    msg.payload[0] = END_TRANSFER_ID; //Send end transfer ID in the payload as well.
+    msg.payload[0] = END_TRANSFER_ID; // Send end transfer ID in payload as well.
+
     UART_transmit(&Serial3, &msg);
     return true;
+}
+
+bool COMMS_getEndTransfer(void)
+{
+    UART_msg_t msg = {0};
+    if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    {
+        if (msg.id != END_TRANSFER_ID)
+        {
+            Serial.println("Warning: Expected END_TRANSFER but received different message ID.");
+            return false;
+        }
+        if (msg.length < 1)
+        {
+            Serial.println("Bad END_TRANSFER message length.");
+            return false;
+        }
+        if (msg.payload[0] != END_TRANSFER_ID)
+        {
+            Serial.println("Bad END_TRANSFER payload.");
+            return false;
+        }
+        return true;
+    }
+    return false;
 }
 
 //-----------BEGIN ABSTRACTED COMMS-----------
@@ -372,7 +402,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
         }
         case UPLINK_RECEIVE_INFO:
         {
-            if (COMMS_receiveFileInfo(hfile))
+            if (COMMS_receiveFileInfo(hfile, huplink))
             {
                 FILE_open(hfile, FILE_OPEN_FOR_READ);
                 huplink->prev_state = UPLINK_RECEIVE_INFO;
@@ -423,26 +453,42 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 huplink->prev_state = UPLINK_SEND_ACK;
                 huplink->state = UPLINK_COMPLETE;
             }
-            else if (huplink->prev_state == UPLINK_RECEIVE_INFO)
+            else
             {
+                huplink->state = huplink->prev_state;
                 huplink->prev_state = UPLINK_SEND_ACK;
-                huplink->state = UPLINK_RECEIVE_INFO;
             }
             break;
         }
         case UPLINK_COMPLETE:
         {
-
+            FILE_writeMetadata(hfile);
+            if (COMMS_getEndTransfer())
+            {
+                huplink->prev_state = UPLINK_COMPLETE;
+                huplink->state = UPLINK_IDLE;
+                hpayload.experiment_ready = true;
+                hcomms.state = COMMS_IDLE;
+            }
+            else
+            {
+                huplink->prev_state = UPLINK_COMPLETE;
+                huplink->state = UPLINK_ERROR;    
+            }
             break;
         }
         case UPLINK_ERROR:
         {
-
+            Serial.println("Downlink ERROR");
+            huplink->prev_state = UPLINK_ERROR;
+            huplink->state = UPLINK_IDLE;
+            hcomms.state = COMMS_IDLE;
             break;
         }
         default:
         {
-
+            huplink->state = UPLINK_IDLE;
+            hcomms.state = COMMS_IDLE;
             break;
         }
     }
@@ -495,6 +541,7 @@ void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks
 
     Serial.println("Sent WOD INFO");
 }
+
 
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length)
 {

@@ -17,6 +17,9 @@
 #define OBC_WATCHDOG_ID     0x69
 #define OBC_WATCHDOG_CODE   0x64
 
+
+#define PAYLOAD_TIMEOUT_TICKS 120000 //Around 10 minutes
+
 //-------------Typedefs and Enums-------------
 typedef enum{
     LONG_PAUSE,

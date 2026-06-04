@@ -6,7 +6,6 @@
 #include "comms.h"
 #include "eps.h"
 #include "logging.h"
-#include "packet.h"
 #include "payload.h"
 #include "system.h"
 

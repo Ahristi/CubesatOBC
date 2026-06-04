@@ -9,18 +9,7 @@
 #define MAX_FILE_NAME_SIZE 192
 
 
-
-#define WOD_BUFFER_BYTES (1024UL * 1024UL * 1024UL) //1GiB
-#define WOD_RECORD_BYTES sizeof(LOGGING_Record_t)
-#define WOD_MAX_RECORDS  (WOD_BUFFER_BYTES / WOD_RECORD_BYTES)
-
              
-
-#define RESULT_META_FILE_NAME           "/result_metadata.bin"
-#define RESULT_DATA_FILE_NAME           "/result.bin"
-
-#define EXPERIMENT_META_FILE_NAME       "/experiment_metadata.bin"
-#define EXPERIMENT_DATA_FILE_NAME       "/experiment.bin"
 
 
 

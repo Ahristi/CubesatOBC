@@ -6,6 +6,7 @@
 #include "file.h"
 #include "comms.h"
 #include "logging.h"
+#include "payload.h"
 
 //-------------DEFINES--------------
 #define COMMS_BAUDRATE 3000000
@@ -26,7 +27,6 @@
 #define COMMS_ACK_ID           0x68
 #define CHUNK_ID               0x69
 #define END_TRANSFER_ID        0x70
-
 #define UPLINK_FILE_INFO_ID    0x75
 
 
@@ -163,8 +163,10 @@ bool COMMS_sendWOD(void);
 bool COMMS_getAck(void);
 bool COMMS_sendAck(void);
 bool COMMS_sendEndTransfer(void);
+bool COMMS_getEndTransfer(void);
 void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink);
+void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
 bool COMMS_receivePacket(uint8_t *payload, uint8_t *length);
-bool COMMS_receiveFileInfo(FILE_Handler_t* hfile);
+bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 #endif
