@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "uart.h"
 
+#define ADCS_COMMAND_ID 0xA3
+
 typedef enum {
     RW_X_POS,
     RW_X_NEG,
@@ -31,10 +33,10 @@ typedef struct __attribute__((packed)) {
     ADCS_Command_Key_t command;
 
 
-} ADCS_Coms_Command_t;
+} ADCS_Coms_Command_Handle_t;
 
 
-extern ADCS_Coms_Command_t adcsCommandHandle;
+extern ADCS_Coms_Command_Handle_t adcsCommandHandle;
 
 
 #endif
