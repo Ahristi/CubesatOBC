@@ -52,8 +52,7 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
             Serial.println("ADCS telemetry packet too short");
             return;
         }
-        memcpy(&hadcs.telemetry, payload, sizeof(ADCS_TelemetryPacket_t));
-        //memcpy(&ADCS_telemetry, payload, sizeof(ADCS_TelemetryPacket_t));      
+        memcpy(&hadcs.telemetry, payload, sizeof(ADCS_TelemetryPacket_t)); 
         Serial.println("ADCS telemetry updated");
     }
 }
@@ -119,7 +118,15 @@ void ADCS_telemetryHandle(void)
     ADCS_telemetry.z_rw_speed     = hadcs.telemetry.rw3;    
     ADCS_telemetry.x_mag_current  = hadcs.telemetry.it1;    
     ADCS_telemetry.y_mag_current  = hadcs.telemetry.it2;    
-    ADCS_telemetry.z_mag_current  = hadcs.telemetry.it3;    
+    ADCS_telemetry.z_mag_current  = hadcs.telemetry.it3;
+
+    ADCS_telemetry.x_mag_field_sense        = hadcs.telemetry.x_mag_field_sense;
+    ADCS_telemetry.y_mag_field_sense        = hadcs.telemetry.y_mag_field_sense;
+    ADCS_telemetry.z_mag_field_sense        = hadcs.telemetry.z_mag_field_sense;
+    ADCS_telemetry.x_mag_field_filt         = hadcs.telemetry.x_mag_field_filt;
+    ADCS_telemetry.y_mag_field_filt         = hadcs.telemetry.y_mag_field_filt;
+    ADCS_telemetry.z_mag_field_filt         = hadcs.telemetry.z_mag_field_filt;
+
     ADCS_telemetry.detumble_scale = hadcs.telemetry.detumble_scale;
     ADCS_telemetry.faults         = hadcs.telemetry.faults;
 }

@@ -82,6 +82,14 @@ typedef struct {
     float it2;
     float it3;
 
+    float x_mag_field_sense;
+    float y_mag_field_sense;
+    float z_mag_field_sense;
+    
+    float x_mag_field_filt;
+    float y_mag_field_filt;
+    float z_mag_field_filt;
+
     float detumble_scale;
     uint16_t faults;
     
