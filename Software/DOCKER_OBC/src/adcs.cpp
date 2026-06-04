@@ -10,8 +10,8 @@ void ADCS_Init(void)
     hadcs.orbital_parameters_ready = false;
     hadcs.detumble_command_ready   = false;
     hadcs.pointing_command_ready   = false;
-    Serial5.begin(ADCS_BAUDRATE);
-    Serial.println("ADCS UART initialised on Serial5");
+    Serial1.begin(ADCS_BAUDRATE);
+    Serial.println("ADCS UART initialised on Serial1");
 }
 
 void ADCS_task(void)
