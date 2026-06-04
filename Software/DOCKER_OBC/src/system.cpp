@@ -18,9 +18,9 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
 
     //Debug
-    EPS_debugPrint();
+    //EPS_debugPrint();
     //SYSTEM_debugPrint();
-    //ADCS_debugPrint();
+    ADCS_debugPrint();
     //Scheduler_debugPrint();
 }
 

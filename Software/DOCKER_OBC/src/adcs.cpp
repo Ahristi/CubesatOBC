@@ -10,8 +10,8 @@ void ADCS_Init(void)
     hadcs.orbital_parameters_ready = false;
     hadcs.detumble_command_ready   = false;
     hadcs.pointing_command_ready   = false;
-    Serial1.begin(ADCS_BAUDRATE);
-    Serial.println("ADCS UART initialised on Serial1");
+    Serial5.begin(ADCS_BAUDRATE);
+    Serial.println("ADCS UART initialised on Serial5");
 }
 
 void ADCS_task(void)
@@ -26,35 +26,12 @@ void ADCS_task(void)
 void ADCS_getTelemetry(void)
 {
     UART_msg_t msg;
-    if (UART_receive(&Serial1, &msg, DEFAULT_UART_TIMEOUT_US))
+    if (UART_receive(&Serial5, &msg, DEFAULT_UART_TIMEOUT_US))
     {
+        Serial.println("ADCS Packet received");
         ADCS_processPacket(msg.id, msg.payload, msg.length);
     }
 }
-
-// void ADCS_getStateControllerUART(Stream* port)
-// {
-//     UART_msg_t msg;
-//     if (UART_receive(port, &msg, DEFAULT_UART_TIMEOUT_US))
-//     {
-//         Serial.println("ADCS Controller Message Received!");
-//         ADCS_processStateControllerUART(port, msg.id, msg.payload, msg.length);
-//     }
-// }
-
-
-// void ADCS_processStateControllerUART(Stream* port, uint8_t id,uint8_t* packet, uint8_t packet_len)
-// {
-//     uint8_t expected_length = ADCS_getRxPayloadLength(id);
-//     if (packet_len != expected_length)
-//     {
-//         Serial.print("Bad ADCS packet length. RX=");
-//         Serial.print(packet_len);
-//         Serial.print(" Expected=");
-//         Serial.println(expected_length);
-//         return;
-//     }
-// }
 
 void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
 {
@@ -75,17 +52,9 @@ void ADCS_processPacket(uint8_t id, uint8_t *payload, uint8_t payload_length)
             return;
         }
         memcpy(&hadcs.telemetry, payload, sizeof(ADCS_TelemetryPacket_t));
+        //memcpy(&ADCS_telemetry, payload, sizeof(ADCS_TelemetryPacket_t));      
         Serial.println("ADCS telemetry updated");
     }
-}
-
-
-void ADCS_receivePacket(Stream *port)
-{
-    UART_msg_t msg;
-    UART_receive(port, &msg, DEFAULT_UART_TIMEOUT_US);
-    uint8_t len = ADCS_getRxPayloadLength(msg.id);
-    ADCS_processPacket(msg.id, msg.payload, len);
 }
 
 uint8_t ADCS_getRxPayloadLength(uint8_t id) 
@@ -98,7 +67,6 @@ uint8_t ADCS_getRxPayloadLength(uint8_t id)
             return ADCS_PACKET_ACK_BYTES;
         case ADCS_PACKET_ERROR:
             return ADCS_PACKET_ERROR_BYTES;
-
         default:
             return 0;
     } 
@@ -113,7 +81,7 @@ void ADCS_updateAttitude(void)
         msg.id     = ADCS_ATTITUDE_UPDATE_ID;
         msg.length = sizeof(ADCS_attitudeCommand_t);
         memcpy(msg.payload, &hadcs.attitude_command, sizeof(ADCS_attitudeCommand_t));
-        UART_transmit(&Serial1, &msg);
+        UART_transmit(&Serial5, &msg);
         Serial.println("Sent attitude command");
     }
 }
@@ -127,13 +95,13 @@ void ADCS_updateOrbitalParameters(void)
         msg.id     = ADCS_ORBIT_UPDATE_ID;
         msg.length = ADCS_ORBIT_UPDATE_BYTES;
         memcpy(msg.payload, &hadcs.orbital_parameters, sizeof(ADCS_orbitalParameters_t));
-        UART_transmit(&Serial1, &msg);
+        UART_transmit(&Serial5, &msg);
     }
 }
 void ADCS_telemetryHandle(void)
 {
     /*
-        This is a bit retarded since we copy the same values between like 4 structs.
+        This is a weird way of doing it since we copy the same values between like 4 structs.
         I was thinking of binning the ADCS_telemetry struct since its effectively the same as hadcs.
         But I want it to be consistent with the way telemetry is handled with the EPS so just doing this.   
         Right now the data flows like this:

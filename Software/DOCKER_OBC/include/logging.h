@@ -1,9 +1,11 @@
 #ifndef LOGGING_H
 #define LOGGING_H
+#include <Arduino.h>
+#include <SD.h>
+#include <Wire.h>
 #include <stdint.h>
-
-
-
+#include "file.h"
+#include "comms.h"
 
 //-------------Defines-------------
 #define SD_CS_PIN 10
@@ -11,33 +13,6 @@
 #define RV3028_ADDR 0x52
 #define LOGGING_MAX_RECORDS 100000
 #define WOD_LOCAL_BUFFER 16
-#define WOD_DATA_FILE                   "/wod.bin"
-#define WOD_META_FILE                   "/wod_metadata.bin"
-#define RESULT_FILE                     "/result.bin"
-#define RESULT_META_FILE                "/result_metadata.bin"
-#define EXPERIMENT_FILE                 "/experiment.bin"
-#define EXPERIMENT_META_FILE            "/experiment_metadata.bin"
-
-
-#define WOD_META_ID              0x574F44UL  // "WOD"
-#define RESULT_META_ID           0x524553UL  // "RES"
-#define EXPERIMENT_META_ID       0x504C44UL  // "PLD"
-
-
-#define WOD_BUFFER_BYTES (1024UL * 1024UL * 1024UL) //1GiB
-#define WOD_RECORD_BYTES sizeof(LOGGING_Record_t)
-#define WOD_MAX_RECORDS  (WOD_BUFFER_BYTES / WOD_RECORD_BYTES)
-
-
-#define RESULT_BUFFER_BYTES (1024UL * 1024UL * 1024UL) //1GiB
-#define RESULT_RECORD_BYTES sizeof(LOGGING_Record_t)
-#define RESULT_MAX_RECORDS  (RESULT_BUFFER_BYTES / RESULT_RECORD_BYTES)
-
-
-#define EXPERIMENT_BUFFER_BYTES (1024UL * 1024UL * 1024UL) //1GiB
-#define EXPERIMENT_RECORD_BYTES sizeof(LOGGING_Record_t)
-#define EXPERIMENT_MAX_RECORDS  (RESULT_BUFFER_BYTES / RESULT_RECORD_BYTES)
-
 
 //-------------Bitmasks-------------
 #define OBC_FAULT_NO_SD_CARD (1U)   << 0
@@ -45,7 +20,9 @@
 #define OBC_FAULT_RTC (1U)          << 2
 
 
-
+#define WOD_META_ID              0x69  
+#define WOD_META_FILE_NAME       "/wod_metadata.bin"
+#define WOD_DATA_FILE_NAME       "/wod.bin"
 
 //-------------Typedefs and Enums-------------
 typedef struct
@@ -113,15 +90,13 @@ typedef struct{
 
 typedef struct __attribute__((packed))
 {
-
-    //EPS Telemetry
     uint16_t year;
     uint8_t  month;
     uint8_t  day;
     uint8_t  hours;
     uint8_t  minutes;
     uint8_t  seconds;
-
+    //EPS Telemetry
     uint16_t rail_3v3_voltage;
     uint16_t rail_3v3_current_ch1;
     uint16_t rail_3v3_current_ch2;
@@ -205,7 +180,7 @@ extern RTC_Time_t RTC_time;
 
 
 //-------------Function Prototypes-------------
-void LOGGING_Init();
+void LOGGING_Init(); 
 void LOGGING_task();
 bool LOGGING_getTime(RTC_Time_t *time);
 bool LOGGING_readMetadata(const char *filename, const LOGGING_Metadata_t *meta);

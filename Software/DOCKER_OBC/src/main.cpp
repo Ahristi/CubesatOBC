@@ -10,7 +10,7 @@
 #include "eps.h"
 #include "comms.h"
 #include "system.h"
-
+#include "file.h"
 
 
 void setup() {
@@ -18,7 +18,7 @@ void setup() {
     Serial.begin(115200);
     Wire.begin();
     SPI.begin();
-
+    FILE_Init();
     CAN_Init();
     COMMS_Init();
     LOGGING_Init();
@@ -26,6 +26,7 @@ void setup() {
     EPS_Init();
     ADCS_Init();
     SYSTEM_Init();
+
 }
 
 void loop()
