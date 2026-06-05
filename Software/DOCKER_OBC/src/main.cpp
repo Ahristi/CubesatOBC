@@ -25,6 +25,7 @@ void setup() {
     Scheduler_init();
     EPS_Init();
     ADCS_Init();
+    PAYLOAD_Init();
     SYSTEM_Init();
 
 }

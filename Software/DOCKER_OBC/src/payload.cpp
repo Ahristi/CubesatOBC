@@ -40,7 +40,7 @@ void PAYLOAD_Init()
     hpayload.results_file = results_file;
 
     Serial4.begin(PAYLOAD_BAUD_RATE);
-    Serial.println("ADCS payload initialised on Serial4");
+    Serial.println("Payload initialised on Serial4");
     hpayload.serial = &Serial4;
 }
 

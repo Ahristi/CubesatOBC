@@ -150,6 +150,7 @@ bool COMMS_getLink(COMMS_Handler_t* hcomms)
         }
         else if (msg.id == EXPERIMENT_COMMAND_ID)
         {
+            Serial.println("Experiment Uplink begin");
             hcomms->state = COMMS_EXPERIMENT_UPLINK;
             return true;
         }
@@ -422,6 +423,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
             }
             else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
             {
+                Serial.println("Error: Uplink timeout");
                 huplink->timeout_ctr = 0;
                 huplink->prev_state = UPLINK_RECEIVE_INFO;
                 huplink->state = UPLINK_ERROR;
@@ -441,6 +443,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 huplink->timeout_ctr = 0;
                 if (packet.length != hfile->metadata.chunk_size)
                 {
+                    Serial.println("Error: bad packet length");
                     huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
                     break;
@@ -449,7 +452,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 {
                     //Packet matches write ptr
                     FILE_write(hfile, packet.payload, hfile->metadata.chunk_size);
-                    hfile->metadata.num_chunks++;
+                    Serial.println(hfile->metadata.num_chunks);
                     huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_SEND_ACK;
                     break;
@@ -464,6 +467,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 else
                 {
                     // missed a packet
+                    Serial.println("ERROR: Packet Lost");
                     huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
                     break;
@@ -474,6 +478,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 huplink->timeout_ctr++;
                 if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
                 {
+                    Serial.println("Error: Uplink timeout during receive packet");
                     huplink->timeout_ctr = 0;
                     huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
@@ -523,10 +528,16 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 huplink->prev_state = UPLINK_COMPLETE;
                 huplink->state = UPLINK_SEND_ACK;
             }
-            else
+            else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
             {
+                huplink->timeout_ctr = 0;
+                Serial.println("Error: Expected end transfer");
                 huplink->prev_state = UPLINK_COMPLETE;
                 huplink->state = UPLINK_ERROR;    
+            }
+            else
+            {
+                huplink->timeout_ctr++;
             }
             break;
         }

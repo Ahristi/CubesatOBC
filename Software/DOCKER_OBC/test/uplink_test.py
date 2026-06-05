@@ -6,7 +6,7 @@ import random
 
 # ---------------- CONFIG ----------------
 
-PORT = "COM6"              # Change this
+PORT = "COM13"              # Change this
 BAUDRATE = 3_000_000
 TIMEOUT_S = 0.5
 
