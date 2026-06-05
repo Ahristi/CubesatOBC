@@ -267,3 +267,47 @@ bool FILE_open(FILE_Handler_t *hfile, FILE_OpenState_t read_write)
     hfile->read_write = read_write;
     return true;
 }
+
+/**
+ * @brief Clear file data and reset the read pointer and num_chunks in the metadata
+ *
+ *
+ * @param hfile Pointer to the file handler for the file being opened.
+ * 
+ * @return True if the file was cleared successfully
+ * @return False if there was an error clearing the file or updating the metadata
+ * 
+ */
+bool FILE_clear(FILE_Handler_t *hfile)
+{
+    if (hfile == nullptr || hfile->file_name == nullptr)
+    {
+        Serial.println("Invalid file handler");
+        return false;
+    }
+
+    // Create the file if it does not already exist
+    if (!SD.exists(hfile->file_name))
+    {
+        if (!SD.remove(hfile->file_name))
+        {
+            Serial.println("Failed to clear file");
+            return false;
+        }
+    }
+
+    File file = SD.open(hfile->file_name, FILE_WRITE);
+    if (!file)
+    {
+        Serial.println("Failed to recreate file");
+        return false;
+    }
+    file.close();
+    hfile->metadata.read_ptr = 0;
+    hfile->metadata.num_chunks = 0;
+    if (!FILE_writeMetadata(hfile))
+    {
+        Serial.println("Failed to save metadata");
+    }
+    return false;
+}

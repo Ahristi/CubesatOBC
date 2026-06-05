@@ -395,7 +395,14 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
     {
         case UPLINK_IDLE:
         {
-
+            if (!FILE_clear(hfile))
+            {
+                huplink->prev_state = UPLINK_IDLE;
+                huplink->state = UPLINK_ERROR;
+                break;
+            }
+            Serial.println(hfile->file_name);
+            Serial.println("Successfully cleared file.");
             huplink->prev_state = UPLINK_IDLE;
             huplink->state = UPLINK_RECEIVE_INFO;
             break;
@@ -404,33 +411,62 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
         {
             if (COMMS_receiveFileInfo(hfile, huplink))
             {
-                FILE_open(hfile, FILE_OPEN_FOR_READ);
+                if (!FILE_open(hfile, FILE_OPEN_FOR_WRITE))
+                {
+                    huplink->prev_state = UPLINK_RECEIVE_INFO;
+                    huplink->state = UPLINK_ERROR;
+                    break;
+                }
                 huplink->prev_state = UPLINK_RECEIVE_INFO;
                 huplink->state = UPLINK_SEND_ACK;
             }
+            else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
+            {
+                huplink->timeout_ctr = 0;
+                huplink->prev_state = UPLINK_RECEIVE_INFO;
+                huplink->state = UPLINK_ERROR;
+            }
             else
             {
-                Serial.println("File info not received");
+                
+                huplink->timeout_ctr++;
             }
             break;
         }
-        case UPLINK_RECEIVE_CHUNK:
+        case UPLINK_RECEIVE_PACKET:
         {
-            uint8_t packet[MAX_CHUNK_SIZE];
-            uint8_t length;
-            if (COMMS_receivePacket(packet, &length))
+            Packet_t packet;
+            if (COMMS_receivePacket(&packet))
             {
-                if (length != hfile->metadata.chunk_size)
+                huplink->timeout_ctr = 0;
+                if (packet.length != hfile->metadata.chunk_size)
                 {
-                    huplink->prev_state = UPLINK_RECEIVE_CHUNK;
+                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
+                    break;
+                }
+                else if (packet.packet_idx == hfile->metadata.num_chunks)
+                {
+                    //Packet matches write ptr
+                    FILE_write(hfile, packet.payload, hfile->metadata.chunk_size);
+                    hfile->metadata.num_chunks++;
+                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
+                    huplink->state = UPLINK_SEND_ACK;
+                    break;
+                }
+                else if (packet.packet_idx < hfile->metadata.num_chunks)
+                {
+                    // Duplicate packet
+                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
+                    huplink->state = UPLINK_SEND_ACK;
+                    break;
                 }
                 else
                 {
-                    FILE_write(hfile, packet, hfile->metadata.num_chunks);
-                    hfile->metadata.num_chunks++;
-                    huplink->prev_state = UPLINK_RECEIVE_CHUNK;
-                    huplink->state = UPLINK_SEND_ACK;
+                    // missed a packet
+                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
+                    huplink->state = UPLINK_ERROR;
+                    break;
                 }
             }
             else 
@@ -439,8 +475,9 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
                 {
                     huplink->timeout_ctr = 0;
-                    huplink->prev_state = UPLINK_RECEIVE_CHUNK;
+                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
+                    break;
                 }
             }
             break;
@@ -453,9 +490,26 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 huplink->prev_state = UPLINK_SEND_ACK;
                 huplink->state = UPLINK_COMPLETE;
             }
+            else if (huplink->prev_state == UPLINK_RECEIVE_PACKET)
+            {
+                huplink->state = UPLINK_RECEIVE_PACKET;
+                huplink->prev_state = UPLINK_SEND_ACK;
+            }
+            else if (huplink->prev_state == UPLINK_RECEIVE_INFO)
+            {
+                huplink->state = UPLINK_RECEIVE_PACKET;
+                huplink->prev_state = UPLINK_SEND_ACK;
+            }
+            else if (huplink->prev_state == UPLINK_COMPLETE)
+            {
+                huplink->prev_state = UPLINK_SEND_ACK;
+                huplink->state = UPLINK_IDLE;
+                hpayload.experiment_ready = true;
+                hcomms.state = COMMS_IDLE;
+            }
             else
             {
-                huplink->state = huplink->prev_state;
+                huplink->state = UPLINK_ERROR;
                 huplink->prev_state = UPLINK_SEND_ACK;
             }
             break;
@@ -465,10 +519,9 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
             FILE_writeMetadata(hfile);
             if (COMMS_getEndTransfer())
             {
+                Serial.println("Uplink Complete");
                 huplink->prev_state = UPLINK_COMPLETE;
-                huplink->state = UPLINK_IDLE;
-                hpayload.experiment_ready = true;
-                hcomms.state = COMMS_IDLE;
+                huplink->state = UPLINK_SEND_ACK;
             }
             else
             {
@@ -479,7 +532,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
         }
         case UPLINK_ERROR:
         {
-            Serial.println("Downlink ERROR");
+            Serial.println("Uplink ERROR");
             huplink->prev_state = UPLINK_ERROR;
             huplink->state = UPLINK_IDLE;
             hcomms.state = COMMS_IDLE;
@@ -557,10 +610,10 @@ bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length)
     return true;
 }
 
-bool COMMS_receivePacket(uint8_t *payload, uint8_t *length)
+bool COMMS_receivePacket(Packet_t* packet)
 {
     UART_msg_t msg = {0};
-    if (payload == NULL || length == NULL)
+    if (packet == NULL)
     {
         return false;
     }
@@ -572,18 +625,22 @@ bool COMMS_receivePacket(uint8_t *payload, uint8_t *length)
     {
         return false;
     }
-    if (msg.length > RX_BUFFER_BYTES)
-    {
-        return false;
-    }
     if (msg.id != CHUNK_ID)
     {
         return false;
     }
-    *length = msg.length;
-    if (msg.length > 0)
+    if (msg.length < 3)
     {
-        memcpy(payload, msg.payload, msg.length);
+        return false;
     }
+    uint8_t packet_len = msg.length - 2;
+    if (packet_len > MAX_PACKET_SIZE)
+    {
+        return false;
+    }
+    //First two bytes of the packet are the packet index`
+    packet->packet_idx = ((uint16_t)msg.payload[0] << 8) | msg.payload[1];  
+    packet->length = packet_len;
+    memcpy(packet->payload, &msg.payload[2], packet->length);
     return true;
 }

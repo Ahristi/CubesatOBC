@@ -64,4 +64,5 @@ size_t FILE_write(FILE_Handler_t *hfile, uint8_t* chunk, uint32_t chunk_size);
 size_t FILE_read(FILE_Handler_t *hfile, uint8_t* chunk);
 bool FILE_checkSDCard(void);
 bool FILE_open(FILE_Handler_t *hfile, FILE_OpenState_t read_write);
+bool FILE_clear(FILE_Handler_t *hfile);
 #endif

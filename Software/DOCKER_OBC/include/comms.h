@@ -7,6 +7,8 @@
 #include "comms.h"
 #include "logging.h"
 #include "payload.h"
+#include "packet.h"
+
 
 //-------------DEFINES--------------
 #define COMMS_BAUDRATE 3000000
@@ -99,6 +101,9 @@ typedef struct __attribute__((packed)) {
 }COMMS_BeaconData_t;
 
 
+
+
+
 typedef enum {
     COMMS_IDLE,
     COMMS_WOD_DOWNLINK, 
@@ -126,7 +131,7 @@ typedef struct {
 typedef enum {
     UPLINK_IDLE,
     UPLINK_RECEIVE_INFO,
-    UPLINK_RECEIVE_CHUNK,
+    UPLINK_RECEIVE_PACKET,
     UPLINK_SEND_ACK,
     UPLINK_COMPLETE,
     UPLINK_ERROR
@@ -167,6 +172,6 @@ bool COMMS_getEndTransfer(void);
 void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink);
 void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
-bool COMMS_receivePacket(uint8_t *payload, uint8_t *length);
+bool COMMS_receivePacket(Packet_t* packet);
 bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 #endif
