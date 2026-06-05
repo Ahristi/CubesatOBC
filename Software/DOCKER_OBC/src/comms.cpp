@@ -199,7 +199,8 @@ bool COMMS_sendAck(void)
 
     msg.sof    = UART_SOF;
     msg.id     = COMMS_ACK_ID;
-    msg.length = 0;
+    msg.length = 1;
+    msg.payload[0] = COMMS_ACK_ID;
 
     UART_transmit(&Serial3, &msg);
 
@@ -271,6 +272,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
         {
             uint32_t num_packets = hfile->metadata.num_chunks -  hfile->metadata.read_ptr;
             COMMS_sendFileInfo(hfile->metadata.ID,  hfile->metadata.chunk_size, num_packets);
+         
             hdownlink->prev_state = DOWNLINK_SEND_INFO;
             hdownlink->state = DOWNLINK_WAIT_ACK;
             break;
@@ -365,6 +367,8 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
             //Save the new read pointer to the SD card so we don't resend old data.
             Serial.println("Downlink Complete");
             FILE_writeMetadata(hfile);
+            FILE_close(hfile);
+            FILE_open(hfile, FILE_OPEN_FOR_WRITE);
             COMMS_sendEndTransfer();
             hdownlink->prev_state = DOWNLINK_COMPLETE;
             hdownlink->state = DOWNLINK_WAIT_ACK;
@@ -374,6 +378,8 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
         {
             Serial.println("Downlink ERROR");
             FILE_writeMetadata(hfile);
+            FILE_close(hfile);
+            FILE_open(hfile, FILE_OPEN_FOR_WRITE);
             hdownlink->prev_state = DOWNLINK_ERROR;
             hdownlink->state = DOWNLINK_IDLE;
             hcomms.state = COMMS_IDLE;
@@ -412,6 +418,10 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
         {
             if (COMMS_receiveFileInfo(hfile, huplink))
             {
+                
+                Serial.println("File info received");
+                Serial.println("File chunks: ");
+                Serial.println(huplink->file_chunks);
                 if (!FILE_open(hfile, FILE_OPEN_FOR_WRITE))
                 {
                     huplink->prev_state = UPLINK_RECEIVE_INFO;
@@ -441,14 +451,16 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
             if (COMMS_receivePacket(&packet))
             {
                 huplink->timeout_ctr = 0;
+                /*
                 if (packet.length != hfile->metadata.chunk_size)
                 {
-                    Serial.println("Error: bad packet length");
+                    Serial.println("Error: bad packet length expected " + String(hfile->metadata.chunk_size) + " but received " + String(packet.length));
                     huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
                     break;
                 }
-                else if (packet.packet_idx == hfile->metadata.num_chunks)
+                */
+                if (packet.packet_idx == hfile->metadata.num_chunks)
                 {
                     //Packet matches write ptr
                     FILE_write(hfile, packet.payload, hfile->metadata.chunk_size);
@@ -467,7 +479,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
                 else
                 {
                     // missed a packet
-                    Serial.println("ERROR: Packet Lost");
+                    Serial.println("ERROR: Packet Lost expected " + String(packet.packet_idx) +" expected " + String(hfile->metadata.num_chunks));
                     huplink->prev_state = UPLINK_RECEIVE_PACKET;
                     huplink->state = UPLINK_ERROR;
                     break;
@@ -489,6 +501,7 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
         }
         case UPLINK_SEND_ACK:
         {
+            Serial.println("Sending ACK");
             COMMS_sendAck();
             if (hfile->metadata.num_chunks == huplink->file_chunks)
             {
@@ -566,18 +579,22 @@ bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink
     UART_msg_t msg;
     if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
     {
+        Serial.println("WARNING: No UART Received while waiting for file info");
         return false;
     }
     if (msg.id != UPLINK_FILE_INFO_ID)
     {
+        Serial.println("WARNING: Incorrect File info ID: " + String(msg.id));
         return false;
     }
     if (msg.length <  FILE_INFO_BYTES)
     {
+        Serial.println("WARNING: File info length too short");
         return false;
     }
     if (msg.payload[0] != hfile->metadata.ID)
     {
+        Serial.println("WARNING: File info ID does not match metadata");
         return false;
     }
     memcpy(&hfile->metadata.chunk_size, &msg.payload[1], sizeof(uint32_t));
@@ -595,6 +612,7 @@ void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks
     msg.length = WOD_INFO_BYTES;
 
     data[0] = fileID;
+    Serial.println(chunk_size);
 
     memcpy(&data[1], &chunk_size, sizeof(uint32_t));
     memcpy(&data[5], &num_chunks, sizeof(uint32_t));
@@ -626,27 +644,28 @@ bool COMMS_receivePacket(Packet_t* packet)
     UART_msg_t msg = {0};
     if (packet == NULL)
     {
+        Serial.println("Warning: NULL packet");
         return false;
     }
-    if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    if (!UART_receive(&Serial3, &msg, 20000))
     {
-        return false;
-    }
-    if (msg.sof != UART_SOF)
-    {
+        Serial.println("Warning: No packet received");
         return false;
     }
     if (msg.id != CHUNK_ID)
     {
+        Serial.println("Warning: Message ID not chunk ID. Received" + String(msg.id));
         return false;
     }
     if (msg.length < 3)
     {
+        Serial.println("Warning: packet too small");
         return false;
     }
-    uint8_t packet_len = msg.length - 2;
+    uint8_t packet_len = msg.length;
     if (packet_len > MAX_PACKET_SIZE)
     {
+        Serial.println("Warning: Packet exceeds maximum packet size");
         return false;
     }
     //First two bytes of the packet are the packet index`

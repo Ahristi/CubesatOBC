@@ -49,8 +49,10 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
 
                 if (msg->length == 0 || msg->length > RX_BUFFER_BYTES)
                 {
+                    Serial.println("Warning: UART message too big");
                     return false;
                 }
+                Serial.println("Length: " + String(msg->length));
 
                 state = UART_RX_READ_PAYLOAD;
                 break;
@@ -70,11 +72,9 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
             {
                 msg->crc |= ((uint16_t)byte << (8 * crc_idx));
                 crc_idx++;
-                Serial.println("CRC");
-
                 if (crc_idx == RX_CRC_BYTES)
                 {
-                    //Serial.println("CRC Passed");
+                    Serial.println("Checking CRC");
                     return UART_checkCRC(msg);
                 }
                 break;

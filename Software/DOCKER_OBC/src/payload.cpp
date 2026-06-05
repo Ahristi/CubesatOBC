@@ -225,6 +225,6 @@ bool PAYLOAD_sendEndTransfer(void)
     msg.length = 1;
     msg.payload[0] = PAYLOAD_END_TRANSFER_ID; 
 
-    UART_transmit(&Serial3, &msg);
+    //UART_transmit(&Serial3, &msg);
     return true;
 }

@@ -84,7 +84,7 @@ void SYSTEM_stateMachine(void)
             if (SYSTEM_isEnteringState())
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
-                EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
+                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
                 heps.eFuse_msg_ready = true;
             }
             if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
@@ -94,7 +94,7 @@ void SYSTEM_stateMachine(void)
             else
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
-                EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
+                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
                 heps.eFuse_msg_ready = true;
             }
             break;

@@ -269,6 +269,31 @@ bool FILE_open(FILE_Handler_t *hfile, FILE_OpenState_t read_write)
 }
 
 /**
+ * @brief Close an open file.
+ *
+ * @param hfile Pointer to the file handler for the file being closed.
+ *
+ * @return True if the file was closed successfully.
+ * @return False if the file handler was invalid or no file was open.
+ */
+bool FILE_close(FILE_Handler_t *hfile)
+{
+    if (hfile == nullptr)
+    {
+        Serial.println("Invalid file handler");
+        return false;
+    }
+    if (!hfile->file)
+    {
+        Serial.println("No open file to close");
+        return false;
+    }
+
+    hfile->file.close();
+    return true;
+}
+
+/**
  * @brief Clear file data and reset the read pointer and num_chunks in metadata.
  *
  * @param hfile Pointer to the file handler.

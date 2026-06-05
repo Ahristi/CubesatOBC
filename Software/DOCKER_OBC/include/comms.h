@@ -25,11 +25,11 @@
 
 #define BEACON_MSG_ID          0x65
 #define WOD_INFO_ID            0x66
+#define UPLINK_FILE_INFO_ID    0x66
 #define WOD_REQUEST_ID         0x67
 #define COMMS_ACK_ID           0x68
 #define CHUNK_ID               0x69
 #define END_TRANSFER_ID        0x70
-#define UPLINK_FILE_INFO_ID    0x75
 
 
 #define WOD_INFO_BYTES  9
