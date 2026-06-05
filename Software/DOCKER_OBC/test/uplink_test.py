@@ -159,7 +159,7 @@ def build_file_info_payload() -> bytes:
     # payload[5:9] = uint32_t file_chunks
     return struct.pack(
         "<BII",
-        EXPERIMENT_FILE_ID,
+        EXPERIMENT_FILE_ID, 
         CHUNK_SIZE,
         NUM_RECORDS,
     )

@@ -74,7 +74,7 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
 
                 if (crc_idx == RX_CRC_BYTES)
                 {
-                    Serial.println("CRC Passed");
+                    //Serial.println("CRC Passed");
                     return UART_checkCRC(msg);
                 }
                 break;
