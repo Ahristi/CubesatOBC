@@ -24,6 +24,12 @@
 #define WOD_META_FILE_NAME       "/wod_metadata.bin"
 #define WOD_DATA_FILE_NAME       "/wod.bin"
 
+#define WOD_BUFFER_BYTES (1024UL * 1024UL * 1024UL) //1GiB
+#define WOD_RECORD_BYTES sizeof(LOGGING_Record_t)
+#define WOD_MAX_RECORDS  (WOD_BUFFER_BYTES / WOD_RECORD_BYTES)
+
+
+
 //-------------Typedefs and Enums-------------
 typedef struct
 {

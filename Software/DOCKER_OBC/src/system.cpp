@@ -79,69 +79,89 @@ void SYSTEM_stateMachine(void)
 {
     switch (hsys.state)
     {
-    case INIT:
-        if (SYSTEM_isEnteringState())
+        case INIT:
         {
-            EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
-            EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
-            EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
-            heps.eFuse_msg_ready = true;
+            if (SYSTEM_isEnteringState())
+            {
+                EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
+                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
+                heps.eFuse_msg_ready = true;
+            }
+            if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
+            {
+                SYSTEM_setState(DETUMBLE);
+            }
+            else
+            {
+                EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
+                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
+                heps.eFuse_msg_ready = true;
+            }
+            break;
         }
-        if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
+        case DETUMBLE:
         {
-            SYSTEM_setState(DETUMBLE);
+            if (SYSTEM_isEnteringState())
+            {
+                //Nothing
+            }
+            if (hadcs.detumble_scale < DETUMBLE_RATE_THRESHOLD)
+            {
+                SYSTEM_setState(IDLE);
+            }
+            break;
         }
-        else
+        case IDLE:
         {
-            EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
-            EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
-            EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
-            heps.eFuse_msg_ready = true;
+            if (SYSTEM_isEnteringState())
+            {
+                //Nothing
+            }
+            if (hcomms.state != COMMS_IDLE)
+            {   
+                SYSTEM_setState(LINK);
+            }
+            else if (hpayload.experiment_ready)
+            {
+                SYSTEM_setState(EXPERIMENT);
+            }
+            break;
         }
-        break;
-
-    case DETUMBLE:
-        if (SYSTEM_isEnteringState())
+        case EXPERIMENT:
         {
-            // Optional: send ADCS detumble command here
+            if (SYSTEM_isEnteringState())
+            {
+                hpayload.start_experiment = true;
+                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
+            }
+            if ((EPS_telemetry.eFuse_states & heps.eFuse_states) != heps.eFuse_states)
+            {
+                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
+                heps.eFuse_msg_ready = true;
+            }   
+            if (hpayload.experiment_finished)
+            {
+                EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
+                heps.eFuse_msg_ready = true;
+                SYSTEM_setState(IDLE);
+            }
+            break;
         }
-
-        if (hadcs.detumble_scale < DETUMBLE_RATE_THRESHOLD)
+        case LINK:
         {
-            SYSTEM_setState(IDLE);
-        }
-        break;
+            if (SYSTEM_isEnteringState())
+            {
+                // Optional: enable radio / start downlink
+            }
 
-    case IDLE:
-        if (SYSTEM_isEnteringState())
+            // Handle comms link
+            break;
+        }
+        default:
         {
-            // Optional: enter low-power or nominal mode
+            SYSTEM_setState(INIT);
+            break;
         }
-
-        // Wait for command, ground pass, experiment time, etc.
-        break;
-
-    case EXPERIMENT:
-        if (SYSTEM_isEnteringState())
-        {
-            // Optional: enable payload, configure experiment, etc.
-        }
-
-        // Run experiment logic
-        break;
-
-    case LINK:
-        if (SYSTEM_isEnteringState())
-        {
-            // Optional: enable radio / start downlink
-        }
-
-        // Handle comms link
-        break;
-
-    default:
-        SYSTEM_setState(INIT);
-        break;
     }
 }
 

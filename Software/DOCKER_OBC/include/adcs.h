@@ -6,7 +6,7 @@
 //-------------Defines-------------
 #define DETUMBLE_RATE_THRESHOLD 0.1 
 #define DETUMBLE_SCALE_START 10.0f
-#define ADCS_BAUDRATE 1000000
+#define ADCS_BAUDRATE 115200
 
 
 #define ADCS_SOF 0x64

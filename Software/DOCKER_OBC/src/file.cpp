@@ -267,3 +267,77 @@ bool FILE_open(FILE_Handler_t *hfile, FILE_OpenState_t read_write)
     hfile->read_write = read_write;
     return true;
 }
+
+/**
+ * @brief Close an open file.
+ *
+ * @param hfile Pointer to the file handler for the file being closed.
+ *
+ * @return True if the file was closed successfully.
+ * @return False if the file handler was invalid or no file was open.
+ */
+bool FILE_close(FILE_Handler_t *hfile)
+{
+    if (hfile == nullptr)
+    {
+        Serial.println("Invalid file handler");
+        return false;
+    }
+    if (!hfile->file)
+    {
+        Serial.println("No open file to close");
+        return false;
+    }
+
+    hfile->file.close();
+    return true;
+}
+
+/**
+ * @brief Clear file data and reset the read pointer and num_chunks in metadata.
+ *
+ * @param hfile Pointer to the file handler.
+ *
+ * @return True if the file was cleared successfully.
+ * @return False if there was an error clearing the file or updating metadata.
+ */
+bool FILE_clear(FILE_Handler_t *hfile)
+{
+    if (hfile == nullptr || hfile->file_name == nullptr)
+    {
+        Serial.println("Invalid file handler");
+        return false;
+    }
+
+    // Remove the existing file if it exists
+    if (SD.exists(hfile->file_name))
+    {
+        if (!SD.remove(hfile->file_name))
+        {
+            Serial.println("Failed to remove file");
+            return false;
+        }
+    }
+
+    // Recreate an empty file
+    File file = SD.open(hfile->file_name, FILE_WRITE);
+    if (!file)
+    {
+        Serial.println("Failed to recreate file");
+        return false;
+    }
+
+    file.close();
+
+    // Reset metadata
+    hfile->metadata.read_ptr = 0;
+    hfile->metadata.num_chunks = 0;
+
+    if (!FILE_writeMetadata(hfile))
+    {
+        Serial.println("Failed to save metadata");
+        return false;
+    }
+
+    return true;
+}

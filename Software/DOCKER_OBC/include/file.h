@@ -9,18 +9,7 @@
 #define MAX_FILE_NAME_SIZE 192
 
 
-
-#define WOD_BUFFER_BYTES (1024UL * 1024UL * 1024UL) //1GiB
-#define WOD_RECORD_BYTES sizeof(LOGGING_Record_t)
-#define WOD_MAX_RECORDS  (WOD_BUFFER_BYTES / WOD_RECORD_BYTES)
-
              
-
-#define RESULT_META_FILE_NAME           "/result_metadata.bin"
-#define RESULT_DATA_FILE_NAME           "/result.bin"
-
-#define EXPERIMENT_META_FILE_NAME       "/experiment_metadata.bin"
-#define EXPERIMENT_DATA_FILE_NAME       "/experiment.bin"
 
 
 
@@ -75,4 +64,6 @@ size_t FILE_write(FILE_Handler_t *hfile, uint8_t* chunk, uint32_t chunk_size);
 size_t FILE_read(FILE_Handler_t *hfile, uint8_t* chunk);
 bool FILE_checkSDCard(void);
 bool FILE_open(FILE_Handler_t *hfile, FILE_OpenState_t read_write);
+bool FILE_close(FILE_Handler_t *hfile);
+bool FILE_clear(FILE_Handler_t *hfile);
 #endif
