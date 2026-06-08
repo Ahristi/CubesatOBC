@@ -451,15 +451,6 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
             if (COMMS_receivePacket(&packet))
             {
                 huplink->timeout_ctr = 0;
-                /*
-                if (packet.length != hfile->metadata.chunk_size)
-                {
-                    Serial.println("Error: bad packet length expected " + String(hfile->metadata.chunk_size) + " but received " + String(packet.length));
-                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
-                    huplink->state = UPLINK_ERROR;
-                    break;
-                }
-                */
                 if (packet.packet_idx == hfile->metadata.num_chunks)
                 {
                     //Packet matches write ptr
@@ -668,7 +659,7 @@ bool COMMS_receivePacket(Packet_t* packet)
         Serial.println("Warning: Packet exceeds maximum packet size");
         return false;
     }
-    //First two bytes of the packet are the packet index`
+    //First two bytes of the packet are the packet index
     packet->packet_idx = ((uint16_t)msg.payload[0] << 8) | msg.payload[1];  
     packet->length = packet_len; //Note that the length includes the two index bytes
     memcpy(packet->payload, &msg.payload[2], packet->length);

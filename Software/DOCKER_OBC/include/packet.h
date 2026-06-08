@@ -15,6 +15,7 @@ typedef struct{
 }Packet_t;
 
 //-------------Function Prototypes--------------
-bool COMMS_sendPacket(Packet_t* packet, HardwareSerialIMXRT* port);
+bool PACKET_send(Packet_t* packet, HardwareSerialIMXRT* port);
+bool PACKET_receive(Packet_t* packet, HardwareSerialIMXRT* port);
 
 #endif

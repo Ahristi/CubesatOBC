@@ -5,11 +5,17 @@
 #include "file.h"
 //-------------Defines-------------
 #define PAYLOAD_TASK_PERIOD_MS 5
-#define PAYLOAD_TIMEOUT_SECONDS 60
-#define PAYLOAD_TIMEOUT_COUNT (PAYLOAD_TIMEOUT_SECONDS*1000)/PAYLOAD_TASK_PERIOD_MS
+#define PAYLOAD_START_TIMEOUT_SECONDS 60
+#define PAYLOAD_START_TIMEOUT_COUNT (PAYLOAD_START_TIMEOUT_SECONDS*1000)/PAYLOAD_TASK_PERIOD_MS
+#define PAYLOAD_ACK_TIMEOUT_MS 200
+#define PAYLOAD_ACK_TIMEOUT_COUNT PAYLOAD_ACK_TIMEOUT_MS/PAYLOAD_TASK_PERIOD_MS
+#define PAYLOAD_EXPERIMENT_TIMEOUT_SECONDS 360
+#define PAYLOAD_EXPERIMENT_TIMEOUT_COUNT PAYLOAD_EXPERIMENT_TIMEOUT_SECONDS*1000/PAYLOAD_TASK_PERIOD_MS
+
+
 
 //File IDs
-#define RESULT_FILE_ID           0x05
+#define RESULT_META_ID           0x05
 #define EXPERIMENT_META_ID       0x07
 
 
@@ -18,12 +24,15 @@
 
 //UART message IDS
 #define PAYLOAD_START_ID         0x10
+#define PAYLOAD_FILE_INFO_ID     0x66 // Same ID used in comms
 
 #define EXPERIMENT_CHUNK_ID      0x11
 #define PAYLOAD_ACK_ID           0x68
 #define PAYLOAD_END_TRANSFER_ID  0x70
 
 
+//UART message lengths
+#define PAYLOAD_FILE_INFO_BYTES 9
 
 
 
@@ -94,10 +103,8 @@ typedef struct{
     bool experiment_ready;
     bool start_experiment;
     bool experiment_finished;
-
-    uint16_t timeout_ctr;
-
-
+    uint32_t num_result_chunks;
+    uint32_t timeout_ctr;
     FILE_Handler_t experiment_file;
     FILE_Handler_t results_file;
     HardwareSerialIMXRT* serial;
@@ -110,9 +117,13 @@ extern PAYLOAD_Handler_t hpayload;
 void PAYLOAD_Init();
 void PAYLOAD_task();
 bool PAYLOAD_getStartCMD(void);
-bool PAYLOAD_sendChunk(uint8_t id, const uint8_t *payload, uint8_t length);
+bool PAYLOAD_sendFileInfo(FILE_Handler_t* hfile, HardwareSerialIMXRT* port);
+bool PAYLOAD_receiveFileInfo(FILE_Handler_t* hfile, HardwareSerialIMXRT* port);
+bool PAYLOAD_sendChunk(void);
+bool PAYLOAD_receiveChunk(void);
 bool PAYLOAD_sendAck(void);
 bool PAYLOAD_getAck(void);
+bool PAYLOAD_getEndTransfer(void);
 bool PAYLOAD_sendEndTransfer(void);
 void PAYLOAD_setState(PAYLOAD_State_t);
 #endif
