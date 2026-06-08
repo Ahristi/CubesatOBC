@@ -39,11 +39,13 @@ typedef struct {
     float pitch;
     float yaw;
 
-
     float omega_x;
     float omega_y;
     float omega_z;
 }ADCS_attitudeCommand_t;
+
+
+
 
 typedef struct {
     float t_gmt;
