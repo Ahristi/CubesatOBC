@@ -27,12 +27,12 @@ typedef enum{
 typedef struct{
     bool request_debug_mode;
     bool debug_enable;
-    bool xrw_test;
-    bool yrw_test;
-    bool zrw_test;
-    bool xmag_test;
-    bool ymag_test;
-    bool zmag_test;
+    float xrw;
+    float yrw;
+    float zrw;
+    float xmag;
+    float ymag;
+    float zmag;
     bool adcs_efuse_test;
     bool payload_efuse_test;
     bool payload_test;
@@ -42,7 +42,7 @@ typedef struct{
 //-------------Function Prototypes-------------
 void DEBUG_Init(void);
 void DEBUG_Task(void);
-
+void DEBUG_update(uint8_t ID);
 
 extern DEBUG_Handler_t hdebug;
 #endif

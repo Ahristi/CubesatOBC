@@ -288,68 +288,18 @@ void SYSTEM_debugPrint(void)
     Serial.println("==================================");
 }
 
-void SYSTEM_debugUpdate(uint8_t ID)
+void DEBUG_update(uint8_t ID)
 {
     switch (ID)
     {
     case DEBUG_TOGGLE:
     {
-        hdebug.debug_enable = true;
-        break;
-    }
-    case DEBUG_TEST_X_RW:
-    {
-        hdebug.xrw_test = !hdebug.xrw_test;
-        break;
-    }
-    case DEBUG_TEST_Y_RW:
-    {
-        hdebug.yrw_test = !hdebug.yrw_test;
-        break;
-    }
-    case DEBUG_TEST_Z_RW:
-    {
-        hdebug.zrw_test = !hdebug.zrw_test;
-        break;
-    }
-    case DEBUG_TEST_X_MAG:
-    {
-        hdebug.xmag_test = !hdebug.xmag_test;
-        break;
-    }
-    case DEBUG_TEST_Y_MAG:
-    {
-        hdebug.ymag_test = !hdebug.ymag_test;
-        break;
-    }
-    case DEBUG_TEST_Z_MAG:
-    {
-        hdebug.zmag_test = !hdebug.zmag_test;
-        break;
-    }
-    case DEBUG_TEST_PAYLOAD:
-    {
-        hdebug.payload_test = !hdebug.payload_test;
-        break;
-    }
-    case DEBUG_TEST_CAMERA:
-    {
-        hdebug.camera_test = !hdebug.camera_test;
-        break;
-    }
-    case DEBUG_TEST_ADCS_EFUSE:
-    {
-        hdebug.adcs_efuse_test = !hdebug.adcs_efuse_test;
-        break;
-    }
-    case DEBUG_TEST_PAYLOAD_EFUSE:
-    {
-        hdebug.payload_efuse_test = !hdebug.payload_efuse_test;
+        hdebug.request_debug_mode = true;
         break;
     }
     case DEBUG_TEST_EXIT:
     {
-        hdebug.debug_enable = false;
+        hdebug.request_debug_mode = false;
     }
     default:
         break;
