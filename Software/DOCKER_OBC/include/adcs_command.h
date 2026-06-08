@@ -4,39 +4,23 @@
 #include <stdint.h>
 #include "uart.h"
 
-#define ADCS_COMMAND_ID 0xA3
-
-typedef enum {
-    RW_X_POS,
-    RW_X_NEG,
-    RW_Y_POS,
-    RW_Y_NEG,
-    RW_Z_POS,
-    RW_Z_NEG,
-    MT_X_POS,
-    MT_X_NEG,
-    MT_Y_POS,
-    MT_Y_NEG,
-    MY_Z_POS,
-    MT_Z_NEG
-} ADCS_Command_Key_t;
-
+#define ADCS_DEBUG_ID 0xA3
 /*
     The purpose of ths code is to define commands from OBC
     To ADCS. It is to be used for comms to command ADCS.
 */
 
 typedef struct __attribute__((packed)) {
+    bool debug_enable;  //Bool to command debug mode on the ADCS side
+    float xrw;          //Commanded x reaction wheel speed in rpm
+    float yrw;          //Commanded y reaction wheel speed in rpm
+    float zrw;          //Commanded z reaction wheel speed in rpm 
+    float xmag;         //Commanded x magnetorquer current in mA
+    float ymag;         //Commanded y magnetorquer current in mA
+    float zmag;         //Commanded z magnetorquer current in mA 
+} ADCS_debugCommand_t;
 
-    bool obey_commands;
-
-    ADCS_Command_Key_t command;
-
-
-} ADCS_Coms_Command_Handle_t;
-
-
-extern ADCS_Coms_Command_Handle_t adcsCommandHandle;
+extern ADCS_debugCommand_t adcsCommandHandle;
 
 
 #endif
