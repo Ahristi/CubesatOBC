@@ -52,8 +52,7 @@ void PAYLOAD_task()
         {
             if (hpayload.start_experiment)
             {
-                hpayload.prev_state = PAYLOAD_OFF;
-                hpayload.state = PAYLOAD_BOOT;
+                PAYLOAD_setState(PAYLOAD_BOOT);
             }
             break;
         }
@@ -61,8 +60,18 @@ void PAYLOAD_task()
         {
             if (PAYLOAD_getStartCMD())
             {
-                hpayload.prev_state = PAYLOAD_BOOT;
-                hpayload.state = PAYLOAD_SEND_EXPERIMENT;
+                Serial.println("Start command received from payload. Start sending chunks.");
+                PAYLOAD_setState(PAYLOAD_SEND_EXPERIMENT);
+            }
+            else if (hpayload.timeout_ctr >=PAYLOAD_TIMEOUT_COUNT)
+            {
+                Serial.println("ERROR: Timed out while waiting for payload start.");
+                hpayload.timeout_ctr = 0;
+                PAYLOAD_setState(PAYLOAD_ERROR);
+            }
+            else
+            {
+                hpayload.timeout_ctr++;
             }
             break;
         }
@@ -214,7 +223,14 @@ bool PAYLOAD_getAck(void)
     return false;
 }
 
-
+void PAYLOAD_setState(PAYLOAD_State_t new_state)
+{
+    if (hpayload.state != new_state)
+    {
+        hpayload.prev_state = hpayload.state;
+        hpayload.state = new_state;
+    }
+}
 
 bool PAYLOAD_sendEndTransfer(void)
 {

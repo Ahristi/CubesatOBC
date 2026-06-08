@@ -124,6 +124,7 @@ void SYSTEM_stateMachine(void)
             else if (hpayload.experiment_ready)
             {
                 SYSTEM_setState(EXPERIMENT);
+                hpayload.experiment_ready = false;
             }
             break;
         }

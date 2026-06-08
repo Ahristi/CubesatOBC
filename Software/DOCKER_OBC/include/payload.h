@@ -4,11 +4,13 @@
 #include <stdbool.h>
 #include "file.h"
 //-------------Defines-------------
+#define PAYLOAD_TASK_PERIOD_MS 5
+#define PAYLOAD_TIMEOUT_SECONDS 60
+#define PAYLOAD_TIMEOUT_COUNT (PAYLOAD_TIMEOUT_SECONDS*1000)/PAYLOAD_TASK_PERIOD_MS
 
 //File IDs
 #define RESULT_FILE_ID           0x05
 #define EXPERIMENT_META_ID       0x07
-
 
 
 #define PAYLOAD_BAUD_RATE        3000000
@@ -20,6 +22,8 @@
 #define EXPERIMENT_CHUNK_ID      0x11
 #define PAYLOAD_ACK_ID           0x68
 #define PAYLOAD_END_TRANSFER_ID  0x70
+
+
 
 
 
@@ -49,13 +53,15 @@
 typedef enum{
     PAYLOAD_OFF,
     PAYLOAD_BOOT,
+    PAYLOAD_SEND_INFO,
     PAYLOAD_SEND_EXPERIMENT,
     PAYLOAD_WAIT_ACK,
     PAYLOAD_SEND_END_FILE,
     PAYLOAD_RUNNING,
     PAYLOAD_GET_RESULTS,
     PAYLOAD_SEND_ACK,
-    PAYLOAD_END
+    PAYLOAD_END,
+    PAYLOAD_ERROR
 }PAYLOAD_State_t;
 
 
@@ -88,6 +94,10 @@ typedef struct{
     bool experiment_ready;
     bool start_experiment;
     bool experiment_finished;
+
+    uint16_t timeout_ctr;
+
+
     FILE_Handler_t experiment_file;
     FILE_Handler_t results_file;
     HardwareSerialIMXRT* serial;
@@ -104,4 +114,5 @@ bool PAYLOAD_sendChunk(uint8_t id, const uint8_t *payload, uint8_t length);
 bool PAYLOAD_sendAck(void);
 bool PAYLOAD_getAck(void);
 bool PAYLOAD_sendEndTransfer(void);
+void PAYLOAD_setState(PAYLOAD_State_t);
 #endif

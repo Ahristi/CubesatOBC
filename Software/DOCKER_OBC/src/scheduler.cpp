@@ -12,7 +12,7 @@ Task tasks[] = {
     {COMMS_task,      5, 0, 0, "Comms"},
     {EPS_task,        5, 0, 0, "EPS"},
     {ADCS_task,      20, 0, 0, "ADCS"},
-    {PAYLOAD_task,    5, 0, 0, "Payload"},
+    {PAYLOAD_task, PAYLOAD_TASK_PERIOD_MS, 0, 0, "Payload"},
     {LOGGING_task, 1000, 0, 0, "Logging"},
     {SYSTEM_task,   100, 0, 0, "System"},
 };

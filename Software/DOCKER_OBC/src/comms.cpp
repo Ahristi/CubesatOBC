@@ -670,7 +670,7 @@ bool COMMS_receivePacket(Packet_t* packet)
     }
     //First two bytes of the packet are the packet index`
     packet->packet_idx = ((uint16_t)msg.payload[0] << 8) | msg.payload[1];  
-    packet->length = packet_len;
+    packet->length = packet_len; //Note that the length includes the two index bytes
     memcpy(packet->payload, &msg.payload[2], packet->length);
     return true;
 }
