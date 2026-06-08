@@ -7,7 +7,7 @@
 #define DETUMBLE_RATE_THRESHOLD 0.1 
 #define DETUMBLE_SCALE_START 10.0f
 #define ADCS_BAUDRATE 115200
-
+#define ADCS_TASK_PERIOD_MS 20
 
 #define ADCS_SOF 0x64
 #define ADCS_RX_BUFFER_LEN 64
@@ -43,6 +43,17 @@ typedef struct {
     float omega_y;
     float omega_z;
 }ADCS_attitudeCommand_t;
+
+
+typedef struct {
+    float xrw;
+    float yrw;
+    float zrw;
+
+    float xmag;
+    float ymag;
+    float zmag;
+}ADCS_adcsDebugCommand_t;
 
 
 

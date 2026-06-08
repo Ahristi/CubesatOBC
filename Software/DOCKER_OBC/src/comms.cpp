@@ -205,7 +205,7 @@ bool COMMS_getLink(COMMS_Handler_t* hcomms)
 
     if (msg.id == DEBUG_MSG_ID)
     {
-        SYSTEM_debugUpdate(msg.payload[0]);
+        
     }
 
     Serial.println("Warning: Bad command received from comms board.");

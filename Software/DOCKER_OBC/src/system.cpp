@@ -1,7 +1,7 @@
 #include "system.h"
 
 SYSTEM_Handler_t hsys{INIT,INIT, true, LONG_PAUSE, 0, 0};
-SYSTEM_DEBUG_Handler_t hdebug;
+
 
 
 
@@ -129,6 +129,12 @@ void SYSTEM_stateMachine(void)
                 SYSTEM_setState(EXPERIMENT);
                 hpayload.experiment_ready = false;
             }
+            else if (hdebug.request_debug_mode)
+            {
+                hdebug.debug_enable = true;
+                Serial.println("Enter debug mode...");
+                SYSTEM_setState(DEBUG);
+            }
             break;
         }
         case EXPERIMENT:
@@ -160,6 +166,14 @@ void SYSTEM_stateMachine(void)
 
             // Handle comms link
             break;
+        }
+        case DEBUG:
+        {
+            if (hdebug.debug_enable == false)
+            {
+                Serial.println("Exiting debug mode...");
+                SYSTEM_setState(IDLE);
+            }
         }
         default:
         {
@@ -276,5 +290,69 @@ void SYSTEM_debugPrint(void)
 
 void SYSTEM_debugUpdate(uint8_t ID)
 {
+    switch (ID)
+    {
+    case DEBUG_TOGGLE:
+    {
+        hdebug.debug_enable = true;
+        break;
+    }
+    case DEBUG_TEST_X_RW:
+    {
+        hdebug.xrw_test = !hdebug.xrw_test;
+        break;
+    }
+    case DEBUG_TEST_Y_RW:
+    {
+        hdebug.yrw_test = !hdebug.yrw_test;
+        break;
+    }
+    case DEBUG_TEST_Z_RW:
+    {
+        hdebug.zrw_test = !hdebug.zrw_test;
+        break;
+    }
+    case DEBUG_TEST_X_MAG:
+    {
+        hdebug.xmag_test = !hdebug.xmag_test;
+        break;
+    }
+    case DEBUG_TEST_Y_MAG:
+    {
+        hdebug.ymag_test = !hdebug.ymag_test;
+        break;
+    }
+    case DEBUG_TEST_Z_MAG:
+    {
+        hdebug.zmag_test = !hdebug.zmag_test;
+        break;
+    }
+    case DEBUG_TEST_PAYLOAD:
+    {
+        hdebug.payload_test = !hdebug.payload_test;
+        break;
+    }
+    case DEBUG_TEST_CAMERA:
+    {
+        hdebug.camera_test = !hdebug.camera_test;
+        break;
+    }
+    case DEBUG_TEST_ADCS_EFUSE:
+    {
+        hdebug.adcs_efuse_test = !hdebug.adcs_efuse_test;
+        break;
+    }
+    case DEBUG_TEST_PAYLOAD_EFUSE:
+    {
+        hdebug.payload_efuse_test = !hdebug.payload_efuse_test;
+        break;
+    }
+    case DEBUG_TEST_EXIT:
+    {
+        hdebug.debug_enable = false;
+    }
+    default:
+        break;
+    }
     return;
 }

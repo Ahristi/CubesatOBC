@@ -12,6 +12,7 @@
 
 
 //-------------DEFINES--------------
+#define COMMS_TASK_PERIOD_MS 5
 #define COMMS_BAUDRATE 3000000
 #define BEACON_TICK_OC 200
 
