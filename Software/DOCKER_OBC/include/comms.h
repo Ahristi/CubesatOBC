@@ -10,6 +10,7 @@
 #include "packet.h"
 
 
+
 //-------------DEFINES--------------
 #define COMMS_BAUDRATE 3000000
 #define BEACON_TICK_OC 200
@@ -23,6 +24,8 @@
 #define EXPERIMENT_COMMAND_ID  0x13
 #define RESULT_REQUEST_ID      0x14
 
+
+#define DEBUG_MSG_ID           0x30
 #define BEACON_MSG_ID          0x65
 #define WOD_INFO_ID            0x66
 #define UPLINK_FILE_INFO_ID    0x66
@@ -30,6 +33,7 @@
 #define COMMS_ACK_ID           0x68
 #define CHUNK_ID               0x69
 #define END_TRANSFER_ID        0x70
+
 
 
 #define WOD_INFO_BYTES  9

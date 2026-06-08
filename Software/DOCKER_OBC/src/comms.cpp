@@ -1,4 +1,5 @@
 #include "comms.h"
+#include "system.h"
 #include <Arduino.h>
 
 COMMS_Handler_t hcomms;
@@ -200,6 +201,11 @@ bool COMMS_getLink(COMMS_Handler_t* hcomms)
         Serial.println("Payload results downlink begin");
         hcomms->state = COMMS_RESULTS_DOWNLINK;
         return true;
+    }
+
+    if (msg.id == DEBUG_MSG_ID)
+    {
+        SYSTEM_debugUpdate(msg.payload[0]);
     }
 
     Serial.println("Warning: Bad command received from comms board.");

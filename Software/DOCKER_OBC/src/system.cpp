@@ -1,6 +1,9 @@
 #include "system.h"
 
 SYSTEM_Handler_t hsys{INIT,INIT, true, LONG_PAUSE, 0, 0};
+SYSTEM_DEBUG_Handler_t hdebug;
+
+
 
 void SYSTEM_Init(void)
 {
@@ -269,4 +272,9 @@ void SYSTEM_debugPrint(void)
     Serial.println();
 
     Serial.println("==================================");
+}
+
+void SYSTEM_debugUpdate(uint8_t ID)
+{
+    return;
 }

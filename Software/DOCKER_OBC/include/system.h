@@ -33,7 +33,8 @@ typedef enum{
     DETUMBLE,
     IDLE,
     EXPERIMENT,
-    LINK
+    LINK,
+    DEBUG
 }SYSTEM_State_t;
 
 
@@ -47,6 +48,22 @@ typedef struct{
     uint8_t watchdog_tick_count;
 }SYSTEM_Handler_t;
 
+typedef struct{
+    bool debug_request;
+    bool xrw_test;
+    bool yrw_test;
+    bool zrw_test;
+    bool xmag_test;
+    bool ymag_test;
+    bool zmag_test;
+    bool adcs_efuse_test;
+    bool payload_efuse_test;
+    bool payload_test;
+    bool camera_test;
+}SYSTEM_DEBUG_Handler_t;
+
+
+extern SYSTEM_DEBUG_Handler_t hdebug;
 
 
 //-------------Function Prototypes-------------
@@ -57,6 +74,7 @@ void SYSTEM_watchdog(void);
 void SYSTEM_stateMachine(void);
 void SYSTEM_setState(SYSTEM_State_t new_state);
 bool SYSTEM_isEnteringState(void);
+void SYSTEM_debugUpdate(uint8_t ID);
 void SYSTEM_debugPrint(void);
 //-------------Variables-------------
 
