@@ -179,4 +179,5 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
 bool COMMS_receivePacket(Packet_t* packet);
 bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
+void COMMS_updateDebug(UART_msg_t* msg);
 #endif

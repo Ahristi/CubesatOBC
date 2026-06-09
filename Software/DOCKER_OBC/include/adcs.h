@@ -46,19 +46,6 @@ typedef struct {
 
 
 typedef struct {
-    float xrw;
-    float yrw;
-    float zrw;
-
-    float xmag;
-    float ymag;
-    float zmag;
-}ADCS_adcsDebugCommand_t;
-
-
-
-
-typedef struct {
     float t_gmt;
     float mean_anomaly;
     float eccentricity;

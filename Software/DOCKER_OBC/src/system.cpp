@@ -298,21 +298,3 @@ void SYSTEM_debugPrint(void)
     Serial.println("==================================");
 }
 
-void DEBUG_update(uint8_t ID)
-{
-    switch (ID)
-    {
-    case DEBUG_TOGGLE:
-    {
-        hdebug.request_debug_mode = true;
-        break;
-    }
-    case DEBUG_TEST_EXIT:
-    {
-        hdebug.request_debug_mode = false;
-    }
-    default:
-        break;
-    }
-    return;
-}

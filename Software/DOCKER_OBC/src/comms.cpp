@@ -1,5 +1,6 @@
 #include "comms.h"
 #include "system.h"
+#include "debug.h"
 #include <Arduino.h>
 
 COMMS_Handler_t hcomms;
@@ -210,7 +211,7 @@ bool COMMS_getLink(COMMS_Handler_t* hcomms)
 
     if (msg.id == DEBUG_MSG_ID)
     {
-        
+
     }
 
     Serial.println("Warning: Bad command received from comms board.");
@@ -865,4 +866,107 @@ bool COMMS_receivePacket(Packet_t* packet)
     }
 
     return true;
+}
+
+void COMMS_updateDebug(UART_msg_t* msg)
+{
+    switch (msg->id)
+    {
+        case(DEBUG_TEST_ACTIVATE):
+        {
+            hdebug.debug_enable = true;
+            break;
+        }
+        case (DEBUG_TEST_X_RW):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.xrw, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug x rw length too small");
+            }
+        }
+        case (DEBUG_TEST_Y_RW):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.yrw, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug y rw length too small");
+            }
+        }
+        case (DEBUG_TEST_Z_RW):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.zrw, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug z rw length too small");
+            }
+        }
+        case (DEBUG_TEST_X_MAG):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.xmag, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug x mag length too small");
+            }
+        }
+
+        case (DEBUG_TEST_Y_MAG):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.ymag, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug y mag length too small");
+            }
+        }
+        case (DEBUG_TEST_Z_MAG):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.zmag, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug z mag length too small");
+            }
+        }
+        case (DEBUG_TEST_PAYLOAD):
+        {
+            hdebug.payload_test = !hdebug.payload_test;
+        }
+        case (DEBUG_TEST_CAMERA):
+        {
+            hdebug.camera_test = !hdebug.camera_test;
+        }
+        case (DEBUG_TEST_ADCS_EFUSE):
+        {
+            hdebug.adcs_efuse_test = !hdebug.adcs_efuse_test;
+        }
+        case (DEBUG_TEST_PAYLOAD_EFUSE):
+        {
+            hdebug.payload_efuse_test = !hdebug.payload_efuse_test;
+        }
+        case (DEBUG_TEST_EXIT):
+        {
+            hdebug.debug_enable = false;
+        }
+        default:
+
+        break;
+    }
+
 }
