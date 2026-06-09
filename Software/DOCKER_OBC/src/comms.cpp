@@ -6,12 +6,17 @@ COMMS_Handler_t hcomms;
 COMMS_downlinkHandler_t hdownlink_wod;
 COMMS_downlinkHandler_t hdownlink_results;
 COMMS_uplinkHandler_t huplink_experiment;
+uint8_t serial3_rx_buffer[COMMS_UART_BUFFER_SIZE];
+
+
 
 static bool COMMS_sendChunk(FILE_Handler_t* hfile);
 static bool COMMS_receiveChunk(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 
+
 void COMMS_Init(void)
 {
+    Serial3.addMemoryForRead(serial3_rx_buffer, COMMS_UART_BUFFER_SIZE);
     Serial3.begin(COMMS_BAUDRATE);
     Serial.println("COMMS UART initialised on Serial3");
 
@@ -580,11 +585,13 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
             }
             else if (huplink->prev_state == UPLINK_COMPLETE)
             {
-                huplink->prev_state = UPLINK_IDLE;
+                huplink->prev_state = UPLINK_SEND_ACK;
                 huplink->state      = UPLINK_IDLE;
 
                 hpayload.experiment_ready = true;
                 hcomms.state              = COMMS_IDLE;
+                Serial.println("Set experiment ready flag");
+
             }
             else
             {
@@ -597,13 +604,13 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
         case UPLINK_COMPLETE:
         {
             FILE_writeMetadata(hfile);
-
             if (COMMS_getEndTransfer())
             {
                 Serial.println("Uplink complete");
                 huplink->timeout_ctr = 0;
                 huplink->prev_state  = UPLINK_COMPLETE;
                 huplink->state       = UPLINK_SEND_ACK;
+                
             }
             else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
             {
@@ -761,9 +768,11 @@ static bool COMMS_receiveChunk(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* hup
     }
 
     Packet_t packet = {0};
+    packet.id = CHUNK_ID; //Filter for chunk packets in packet receive
 
     if (!PACKET_receive(&packet, &Serial3))
     {
+        
         return false;
     }
 

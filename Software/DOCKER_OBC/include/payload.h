@@ -18,23 +18,25 @@
 #define RESULT_META_ID           0x05
 #define EXPERIMENT_META_ID       0x07
 
-
 #define PAYLOAD_BAUD_RATE        3000000
 
 
 //UART message IDS
-#define PAYLOAD_START_ID         0x10
-#define PAYLOAD_FILE_INFO_ID     0x66 // Same ID used in comms
+#define PAYLOAD_ON_ID               0xB0
+#define PAYLOAD_START_CMD_ID        0xB1
+#define PAYLOAD_STOP_CMD_ID         0xB2
+#define PAYLOAD_DEBUG_CMD_ID        0xB3
+#define PAYLOAD_REQUEST_TRANSFER_ID 0xB4
+#define PAYLOAD_FILE_INFO_ID        0x66 //Same ID used in comm`s
 
-#define EXPERIMENT_CHUNK_ID      0x11
-#define PAYLOAD_ACK_ID           0x68
-#define PAYLOAD_END_TRANSFER_ID  0x70
+#define EXPERIMENT_CHUNK_ID         0x11
+#define RESULTS_CHUNK_ID            0x69
+#define PAYLOAD_ACK_ID              0x68 //Same ID used in comms
+#define PAYLOAD_END_TRANSFER_ID     0x70
 
 
 //UART message lengths
 #define PAYLOAD_FILE_INFO_BYTES 9
-
-
 
 
 
@@ -116,7 +118,7 @@ extern PAYLOAD_Handler_t hpayload;
 //-------------Function Prototypes-------------
 void PAYLOAD_Init();
 void PAYLOAD_task();
-bool PAYLOAD_getStartCMD(void);
+bool PAYLOAD_getOnMSG(void);
 bool PAYLOAD_sendFileInfo(FILE_Handler_t* hfile, HardwareSerialIMXRT* port);
 bool PAYLOAD_receiveFileInfo(FILE_Handler_t* hfile, HardwareSerialIMXRT* port);
 bool PAYLOAD_sendChunk(void);

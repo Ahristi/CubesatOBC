@@ -6,6 +6,8 @@
 #define MAX_PACKET_SIZE 192
 #define PACKET_INDEX_BYTES 2
 
+#define PACKET_ID              0x69
+
 //-------------Typedefs and Enums--------------
 typedef struct{
     uint8_t id;

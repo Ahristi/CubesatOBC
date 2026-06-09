@@ -41,7 +41,7 @@
 #define FILE_INFO_BYTES 9
 #define MAX_ACK_RETRIES 300
 #define UPLINK_TIMEOUT  300
-
+#define COMMS_UART_BUFFER_SIZE 1024
 
 //-------------Typedefs and Enums--------------
 typedef struct __attribute__((packed)) {

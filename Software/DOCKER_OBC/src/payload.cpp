@@ -62,9 +62,9 @@ void PAYLOAD_task()
 
         case PAYLOAD_BOOT:
         {
-            if (PAYLOAD_getStartCMD())
+            if (PAYLOAD_getOnMSG())
             {
-                Serial.println("Start command received from payload. Sending experiment file info.");
+                Serial.println("Payload is on. Sending experiment file info.");
                 hpayload.timeout_ctr = 0;
                 PAYLOAD_setState(PAYLOAD_SEND_INFO);
             }
@@ -307,7 +307,7 @@ void PAYLOAD_task()
     }
 }
 
-bool PAYLOAD_getStartCMD(void)
+bool PAYLOAD_getOnMSG(void)
 {
     UART_msg_t msg = {0};
 
@@ -316,7 +316,7 @@ bool PAYLOAD_getStartCMD(void)
         return false;
     }
 
-    if (msg.id != PAYLOAD_START_ID)
+    if (msg.id != PAYLOAD_ON_ID)
     {
         Serial.println("Warning: Bad command received from payload board.");
         return false;
@@ -328,7 +328,7 @@ bool PAYLOAD_getStartCMD(void)
         return false;
     }
 
-    if (msg.payload[0] != PAYLOAD_START_ID)
+    if (msg.payload[0] != PAYLOAD_ON_ID)
     {
         Serial.println("Bad start message payload");
         return false;

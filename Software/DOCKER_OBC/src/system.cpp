@@ -21,7 +21,7 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
     //Debug
     //EPS_debugPrint();
-    //SYSTEM_debugPrint();
+    SYSTEM_debugPrint();
     //ADCS_debugPrint();
     //Scheduler_debugPrint();
 }
@@ -87,31 +87,36 @@ void SYSTEM_stateMachine(void)
             if (SYSTEM_isEnteringState())
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
-                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
+                EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
                 heps.eFuse_msg_ready = true;
             }
             if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
             {
-                SYSTEM_setState(DETUMBLE);
+                SYSTEM_setState(IDLE);
             }
             else
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
-                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
+                
+                EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
                 heps.eFuse_msg_ready = true;
             }
             break;
         }
         case DETUMBLE:
         {
-            if (SYSTEM_isEnteringState())
-            {
-                //Nothing
-            }
-            if (hadcs.detumble_scale < DETUMBLE_RATE_THRESHOLD)
-            {
-                SYSTEM_setState(IDLE);
-            }
+            SYSTEM_setState(IDLE);
+            /*
+                if (SYSTEM_isEnteringState())
+                {
+                    //Nothing
+                    SYSTEM_setState(IDLE); //Skip detumble mode for testing without ADCSs
+                }
+                if (hadcs.detumble_scale < DETUMBLE_RATE_THRESHOLD)
+                {
+                    SYSTEM_setState(IDLE);
+                }
+            */
             break;
         }
         case IDLE:
@@ -126,6 +131,8 @@ void SYSTEM_stateMachine(void)
             }
             else if (hpayload.experiment_ready)
             {
+                Serial.println("Experiment Received!");
+                hpayload.experiment_finished = false;
                 SYSTEM_setState(EXPERIMENT);
                 hpayload.experiment_ready = false;
             }
@@ -163,7 +170,10 @@ void SYSTEM_stateMachine(void)
             {
                 // Optional: enable radio / start downlink
             }
-
+            if (hcomms.state == COMMS_IDLE)
+            {
+                SYSTEM_setState(IDLE);
+            }
             // Handle comms link
             break;
         }

@@ -58,17 +58,19 @@ bool PACKET_receive(Packet_t* packet, HardwareSerialIMXRT* port)
 
     if (!UART_receive(port, &msg, DEFAULT_UART_TIMEOUT_US))
     {
+        Serial.println("WARNING: No Packet Received");
         return false;
     }
 
     if (msg.id != packet->id)
     {
+        Serial.println("WARNING: Packet ID Incorrect. Received " + String(msg.id));
         return false;
     }
 
     if (msg.length < PACKET_INDEX_BYTES)
     {
-        Serial.println("Bad packet length");
+        Serial.println("Bad packet length. Got " + String(msg.length));
         return false;
     }
 
