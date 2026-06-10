@@ -120,6 +120,11 @@ void ADCS_telemetryHandle(void)
     ADCS_telemetry.y_mag_current  = hadcs.telemetry.it2;    
     ADCS_telemetry.z_mag_current  = hadcs.telemetry.it3;
 
+    for (int i = 0; i < 6; i++)
+    {
+        ADCS_telemetry.sun_sense[i] = hadcs.telemetry.sun_sense[i];
+    }
+
     ADCS_telemetry.x_mag_field_sense        = hadcs.telemetry.x_mag_field_sense;
     ADCS_telemetry.y_mag_field_sense        = hadcs.telemetry.y_mag_field_sense;
     ADCS_telemetry.z_mag_field_sense        = hadcs.telemetry.z_mag_field_sense;

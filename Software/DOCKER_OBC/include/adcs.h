@@ -82,6 +82,8 @@ typedef struct __attribute__((packed)) {
     float it2;
     float it3;
 
+    float sun_sense[6];
+
     float x_mag_field_sense;
     float y_mag_field_sense;
     float z_mag_field_sense;
