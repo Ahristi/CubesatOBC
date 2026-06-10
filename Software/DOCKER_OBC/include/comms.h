@@ -91,6 +91,8 @@ typedef struct __attribute__((packed)) {
     float    y_mag_field_filt;
     float    z_mag_field_filt;
 
+    float    sun_sense[6];
+
     float    detumble_scale;
     
     uint16_t EPS_Faults;

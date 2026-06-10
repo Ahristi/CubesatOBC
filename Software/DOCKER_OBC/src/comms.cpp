@@ -123,6 +123,10 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->x_mag_field_filt      = ADCS_telemetry.x_mag_field_filt;
     data->y_mag_field_filt      = ADCS_telemetry.y_mag_field_filt;
     data->z_mag_field_filt      = ADCS_telemetry.z_mag_field_filt;
+    for (int i = 0; i < 6; i ++)
+    {
+        data->sun_sense[i] = ADCS_telemetry.sun_sense[i];
+    }
     data->EPS_Faults            = satellite_faults.EPS_Faults;
     data->OBC_Faults            = satellite_faults.OBC_Faults;
     data->ADCS_Faults           = satellite_faults.ADCS_Faults;
