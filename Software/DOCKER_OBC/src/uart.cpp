@@ -20,7 +20,7 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
         byte = port->read();
         // Reset inter-byte timeout whenever progress is made
         last_byte_time = micros();
-
+        Serial.println("Byte received");
         switch (state)
         {
             case UART_RX_WAIT_SOF:
@@ -96,6 +96,7 @@ void UART_transmit(Stream *port, UART_msg_t* msg)
 
     if (msg->length > RX_BUFFER_BYTES)
     {
+        Serial.println("ERROR: UART Message is too big");
         return;
     }
     msg->sof = UART_SOF;

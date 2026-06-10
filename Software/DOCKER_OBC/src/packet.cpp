@@ -14,11 +14,13 @@ bool PACKET_send(Packet_t* packet, HardwareSerialIMXRT* port)
 {
     if (packet == nullptr || port == nullptr)
     {
+        Serial.println("ERROR: Null Packet");
         return false;
     }
 
     if (packet->length == 0 || packet->payload == nullptr)
     {
+        Serial.println("ERROR: No payload");
         return false;
     }
 
@@ -30,7 +32,7 @@ bool PACKET_send(Packet_t* packet, HardwareSerialIMXRT* port)
 
     memcpy(&msg.payload[0], &packet->packet_idx, PACKET_INDEX_BYTES);
     memcpy(&msg.payload[PACKET_INDEX_BYTES], packet->payload, packet->length);
-
+    Serial.println("Transmitting UART");
     UART_transmit(port, &msg);
 
     return true;

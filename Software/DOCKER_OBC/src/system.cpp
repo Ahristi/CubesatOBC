@@ -84,9 +84,12 @@ void SYSTEM_stateMachine(void)
     {
         case INIT:
         {
+            hpayload.experiment_ready = true;
+            SYSTEM_setState(EXPERIMENT);
             if (SYSTEM_isEnteringState())
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);  
                 EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
                 heps.eFuse_msg_ready = true;
             }
@@ -97,7 +100,7 @@ void SYSTEM_stateMachine(void)
             else
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
-                
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);  
                 EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
                 heps.eFuse_msg_ready = true;
             }
@@ -121,6 +124,7 @@ void SYSTEM_stateMachine(void)
         }
         case IDLE:
         {
+            
             if (SYSTEM_isEnteringState())
             {
                 //Nothing
@@ -149,16 +153,16 @@ void SYSTEM_stateMachine(void)
             if (SYSTEM_isEnteringState())
             {
                 hpayload.start_experiment = true;
-                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             }
             if ((EPS_telemetry.eFuse_states & heps.eFuse_states) != heps.eFuse_states)
             {
-                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
                 heps.eFuse_msg_ready = true;
             }   
             if (hpayload.experiment_finished)
             {
-                EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
+               //EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
                 heps.eFuse_msg_ready = true;
                 SYSTEM_setState(IDLE);
             }

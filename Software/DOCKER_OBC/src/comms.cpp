@@ -211,7 +211,7 @@ bool COMMS_getLink(COMMS_Handler_t* hcomms)
 
     if (msg.id == DEBUG_MSG_ID)
     {
-
+        COMMS_updateDebug(&msg);
     }
 
     Serial.println("Warning: Bad command received from comms board.");
@@ -874,7 +874,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
     {
         case(DEBUG_TEST_ACTIVATE):
         {
-            hdebug.debug_enable = true;
+            hdebug.request_debug_mode = true;
             break;
         }
         case (DEBUG_TEST_X_RW):
@@ -963,6 +963,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
         case (DEBUG_TEST_EXIT):
         {
             hdebug.debug_enable = false;
+            hdebug.request_debug_mode = false;
         }
         default:
 
