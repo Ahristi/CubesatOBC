@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "file.h"
 //-------------Defines-------------
-#define PAYLOAD_TASK_PERIOD_MS 5
+#define PAYLOAD_TASK_PERIOD_MS 1
 #define PAYLOAD_START_TIMEOUT_SECONDS 360
 #define PAYLOAD_START_TIMEOUT_COUNT (PAYLOAD_START_TIMEOUT_SECONDS*1000)/PAYLOAD_TASK_PERIOD_MS
 #define PAYLOAD_ACK_TIMEOUT_MS 200
@@ -18,7 +18,7 @@
 #define RESULT_META_ID           0x05
 #define EXPERIMENT_META_ID       0x07
 
-#define PAYLOAD_BAUD_RATE        115200
+#define PAYLOAD_BAUD_RATE        3000000
 
 
 //UART message IDS

@@ -169,7 +169,7 @@ void PAYLOAD_task()
                 {
                     Serial.println("Experiment file sent. Waiting for payload results...");
                     hpayload.timeout_ctr = 0;
-                    PAYLOAD_setState(PAYLOAD_RUNNING);
+                    PAYLOAD_setState(PAYLOAD_START_EXPERIMENT);
                 }
             }
             else if (hpayload.timeout_ctr >= PAYLOAD_ACK_TIMEOUT_COUNT)
@@ -246,7 +246,7 @@ void PAYLOAD_task()
                 Serial.println("Received payload result file info. Clearing Results file.");
                 FILE_clear(&hpayload.results_file);
                 hpayload.timeout_ctr = 0;
-                hpayload.results_file.metadata.num_chunks = hpayload.num_result_chunks;
+                hpayload.results_file.metadata.num_chunks = 0;
                 hpayload.results_file.metadata.read_ptr = 0;
 
                 if (!FILE_open(&hpayload.results_file, FILE_OPEN_FOR_WRITE))
@@ -278,7 +278,7 @@ void PAYLOAD_task()
                 Serial.print("Received result chunk ");
                 Serial.print(hpayload.results_file.metadata.read_ptr + 1);
                 Serial.print(" / ");
-                Serial.println(hpayload.results_file.metadata.num_chunks);
+                Serial.println(hpayload.num_result_chunks);
 
                 hpayload.results_file.metadata.read_ptr++;
                 hpayload.timeout_ctr = 0;
@@ -308,7 +308,7 @@ void PAYLOAD_task()
             }
             else if (hpayload.prev_state == PAYLOAD_RUNNING)
             {
-                if (hpayload.results_file.metadata.num_chunks == 0)
+                if (hpayload.num_result_chunks== 0)
                 {
                     PAYLOAD_setState(PAYLOAD_END);
                 }
@@ -319,7 +319,7 @@ void PAYLOAD_task()
             }
             else if (hpayload.prev_state == PAYLOAD_GET_RESULTS)
             {
-                if (hpayload.results_file.metadata.read_ptr >= hpayload.results_file.metadata.num_chunks)
+                if (hpayload.results_file.metadata.read_ptr >= hpayload.num_result_chunks)
                 {
                     PAYLOAD_setState(PAYLOAD_END);
                 }
@@ -477,6 +477,7 @@ static bool PAYLOAD_sendChunk(FILE_Handler_t* hfile)
 bool PAYLOAD_receiveChunk()
 {
     Packet_t packet = {0};
+    packet.id = 0x69;
 
     if (!PACKET_receive(&packet, hpayload.serial))
     {

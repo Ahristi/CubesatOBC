@@ -20,7 +20,6 @@ bool UART_receive(Stream *port, UART_msg_t* msg, uint32_t timeout_us)
         byte = port->read();
         // Reset inter-byte timeout whenever progress is made
         last_byte_time = micros();
-        Serial.println("Byte received");
         switch (state)
         {
             case UART_RX_WAIT_SOF:
@@ -108,9 +107,7 @@ void UART_transmit(Stream *port, UART_msg_t* msg)
     uint16_t crc_offset = RX_HEADER_BYTES + msg->length;
     data[crc_offset]     = msg->crc & 0xFF;
     data[crc_offset + 1] = msg->crc >> 8;
-
     port->write(data, msg->length + RX_HEADER_BYTES + RX_CRC_BYTES);
-
 }
 
 

@@ -32,7 +32,7 @@ bool PACKET_send(Packet_t* packet, HardwareSerialIMXRT* port)
 
     memcpy(&msg.payload[0], &packet->packet_idx, PACKET_INDEX_BYTES);
     memcpy(&msg.payload[PACKET_INDEX_BYTES], packet->payload, packet->length);
-    Serial.println("Transmitting UART");
+    
     UART_transmit(port, &msg);
 
     return true;
