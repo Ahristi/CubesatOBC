@@ -1,20 +1,41 @@
 #include "comms.h"
+#include "system.h"
+#include "debug.h"
 #include <Arduino.h>
 
 COMMS_Handler_t hcomms;
 COMMS_downlinkHandler_t hdownlink_wod;
 COMMS_downlinkHandler_t hdownlink_results;
 COMMS_uplinkHandler_t huplink_experiment;
+uint8_t serial3_rx_buffer[COMMS_UART_BUFFER_SIZE];
+
+
+
+static bool COMMS_sendChunk(FILE_Handler_t* hfile);
+static bool COMMS_receiveChunk(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 
 
 void COMMS_Init(void)
 {
+    Serial3.addMemoryForRead(serial3_rx_buffer, COMMS_UART_BUFFER_SIZE);
     Serial3.begin(COMMS_BAUDRATE);
     Serial.println("COMMS UART initialised on Serial3");
+
     hcomms.beacon_tick = 0;
-    hcomms.state = COMMS_IDLE;
-    hdownlink_wod.state = DOWNLINK_IDLE;
-    hdownlink_wod.prev_state = DOWNLINK_IDLE;
+    hcomms.state       = COMMS_IDLE;
+
+    hdownlink_wod.state       = DOWNLINK_IDLE;
+    hdownlink_wod.prev_state  = DOWNLINK_IDLE;
+    hdownlink_wod.ack_retries = 0;
+
+    hdownlink_results.state       = DOWNLINK_IDLE;
+    hdownlink_results.prev_state  = DOWNLINK_IDLE;
+    hdownlink_results.ack_retries = 0;
+
+    huplink_experiment.state       = UPLINK_IDLE;
+    huplink_experiment.prev_state  = UPLINK_IDLE;
+    huplink_experiment.timeout_ctr = 0;
+    huplink_experiment.file_chunks = 0;
 }
 
 void COMMS_task()
@@ -26,45 +47,59 @@ void COMMS_task()
             if (!COMMS_getLink(&hcomms))
             {
                 hcomms.beacon_tick++;
+
                 if (hcomms.beacon_tick >= BEACON_TICK_OC)
                 {
                     hcomms.beacon_tick = 0;
                     COMMS_sendBeacon();
                 }
+
                 break;
             }
+
+            // Intentionally fall through. COMMS_getLink() selected the next state.
         }
+
         case COMMS_WOD_DOWNLINK:
         {
             COMMS_downlink(&wod, &hdownlink_wod);
             break;
         }
+
+        case COMMS_RESULTS_DOWNLINK:
+        {
+            COMMS_downlink(&hpayload.results_file, &hdownlink_results);
+            break;
+        }
+
         case COMMS_EXPERIMENT_UPLINK:
         {
             COMMS_uplink(&hpayload.experiment_file, &huplink_experiment);
             break;
         }
+
         default:
         {
             hcomms.state = COMMS_IDLE;
             break;
         }
-
     }
-    return;
 }
-
 
 void COMMS_sendBeacon(void)
 {
-    UART_msg_t msg;
-    msg.sof = UART_SOF;
-    msg.id  = BEACON_MSG_ID;
+    UART_msg_t msg = {0};
+
+    msg.sof    = UART_SOF;
+    msg.id     = BEACON_MSG_ID;
     msg.length = sizeof(COMMS_BeaconData_t);
-    COMMS_BeaconData_t data;
+
+    COMMS_BeaconData_t data = {0};
     COMMS_packBeacon(&data);
+
     memcpy(msg.payload, &data, sizeof(COMMS_BeaconData_t));
     UART_transmit(&Serial3, &msg);
+
     Serial.println("Sent Beacon");
 }
 
@@ -137,73 +172,93 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
 
 bool COMMS_getLink(COMMS_Handler_t* hcomms)
 {
-    UART_msg_t msg;
-    if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    if (hcomms == nullptr)
     {
-        Serial.println("Received message from comms board");
-        if (msg.length < 1)
-        {
-            Serial.println("Bad comms request length");
-            return false;
-        }
-
-        if ((msg.id == WOD_REQUEST_ID))
-        {
-            hcomms->state = COMMS_WOD_DOWNLINK;
-            return true;
-        }
-        else if (msg.id == EXPERIMENT_COMMAND_ID)
-        {
-            Serial.println("Experiment Uplink begin");
-            hcomms->state = COMMS_EXPERIMENT_UPLINK;
-            return true;
-        }
-        else if (msg.id == RESULT_REQUEST_ID)
-        {
-            hcomms->state = COMMS_RESULTS_DOWNLINK;
-            return true;
-        }
-        else
-        {
-            Serial.println("Warning: Bad command received from Comms board.");
-            return false;
-        }
+        Serial.println("ERROR: Null comms handler");
+        return false;
     }
+
+    UART_msg_t msg = {0};
+
+    if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    {
+        return false;
+    }
+
+    Serial.println("Received message from comms board");
+
+    if (msg.length < 1)
+    {
+        Serial.println("Bad comms request length");
+        return false;
+    }
+
+    if (msg.id == WOD_REQUEST_ID)
+    {
+        hcomms->state = COMMS_WOD_DOWNLINK;
+        return true;
+    }
+
+    if (msg.id == EXPERIMENT_COMMAND_ID)
+    {
+        Serial.println("Experiment uplink begin");
+        hcomms->state = COMMS_EXPERIMENT_UPLINK;
+        return true;
+    }
+
+    if (msg.id == RESULT_REQUEST_ID)
+    {
+        Serial.println("Payload results downlink begin");
+        hcomms->state = COMMS_RESULTS_DOWNLINK;
+        return true;
+    }
+
+    if (msg.id == DEBUG_MSG_ID)
+    {
+        COMMS_updateDebug(&msg);
+    }
+
+    Serial.println("Warning: Bad command received from comms board.");
     return false;
 }
-
-
 
 bool COMMS_getAck(void)
 {
-    UART_msg_t msg;
-    if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
-    {
-        if (msg.length < 1)
-        {
-            Serial.println("Bad ack message length");
-            return false;
-        }
+    UART_msg_t msg = {0};
 
-        if ((msg.id == COMMS_ACK_ID))
-        {
-            return true;
-        }
-        else
-        {
-            Serial.println("Warning: Bad command received from Comms board.");
-            return false;
-        }
+    if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+    {
+        return false;
     }
-    return false;
+
+    if (msg.id != COMMS_ACK_ID)
+    {
+        Serial.println("Warning: Expected ACK but received different message ID.");
+        return false;
+    }
+
+    if (msg.length < 1)
+    {
+        Serial.println("Bad ACK message length");
+        return false;
+    }
+
+    if (msg.payload[0] != COMMS_ACK_ID)
+    {
+        Serial.println("Bad ACK payload");
+        return false;
+    }
+
+    return true;
 }
+
 bool COMMS_sendAck(void)
 {
     UART_msg_t msg = {0};
 
-    msg.sof    = UART_SOF;
-    msg.id     = COMMS_ACK_ID;
-    msg.length = 1;
+    msg.sof        = UART_SOF;
+    msg.id         = COMMS_ACK_ID;
+    msg.length     = 1;
     msg.payload[0] = COMMS_ACK_ID;
 
     UART_transmit(&Serial3, &msg);
@@ -211,107 +266,114 @@ bool COMMS_sendAck(void)
     return true;
 }
 
-
 bool COMMS_sendEndTransfer(void)
 {
     UART_msg_t msg = {0};
 
-    msg.sof = UART_SOF;
-    msg.id  = END_TRANSFER_ID;
-    msg.length = 1;
-    msg.payload[0] = END_TRANSFER_ID; // Send end transfer ID in payload as well.
+    msg.sof        = UART_SOF;
+    msg.id         = END_TRANSFER_ID;
+    msg.length     = 1;
+    msg.payload[0] = END_TRANSFER_ID;
 
     UART_transmit(&Serial3, &msg);
+
     return true;
 }
 
 bool COMMS_getEndTransfer(void)
 {
     UART_msg_t msg = {0};
-    if (UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
+
+    if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
     {
-        if (msg.id != END_TRANSFER_ID)
-        {
-            Serial.println("Warning: Expected END_TRANSFER but received different message ID.");
-            return false;
-        }
-        if (msg.length < 1)
-        {
-            Serial.println("Bad END_TRANSFER message length.");
-            return false;
-        }
-        if (msg.payload[0] != END_TRANSFER_ID)
-        {
-            Serial.println("Bad END_TRANSFER payload.");
-            return false;
-        }
-        return true;
+        return false;
     }
-    return false;
+
+    if (msg.id != END_TRANSFER_ID)
+    {
+        Serial.println("Warning: Expected END_TRANSFER but received different message ID.");
+        return false;
+    }
+
+    if (msg.length < 1)
+    {
+        Serial.println("Bad END_TRANSFER message length.");
+        return false;
+    }
+
+    if (msg.payload[0] != END_TRANSFER_ID)
+    {
+        Serial.println("Bad END_TRANSFER payload.");
+        return false;
+    }
+
+    return true;
 }
 
 //-----------BEGIN ABSTRACTED COMMS-----------
 
-
-
 void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
 {
+    if (hfile == nullptr || hdownlink == nullptr)
+    {
+        Serial.println("ERROR: Null handler in COMMS_downlink");
+        hcomms.state = COMMS_IDLE;
+        return;
+    }
+
     switch (hdownlink->state)
     {
         case DOWNLINK_IDLE:
         {
-            if (hfile->metadata.read_ptr == hfile->metadata.num_chunks)
+            hdownlink->ack_retries = 0;
+
+            if (hfile->metadata.read_ptr >= hfile->metadata.num_chunks)
             {
                 hdownlink->prev_state = DOWNLINK_IDLE;
-                hdownlink->state = DOWNLINK_COMPLETE;
+                hdownlink->state      = DOWNLINK_COMPLETE;
             }
             else
-            { 
+            {
                 hdownlink->prev_state = DOWNLINK_IDLE;
-                hdownlink->state = DOWNLINK_SEND_INFO;
+                hdownlink->state      = DOWNLINK_SEND_INFO;
             }
+
             break;
         }
+
         case DOWNLINK_SEND_INFO:
         {
-            uint32_t num_packets = hfile->metadata.num_chunks -  hfile->metadata.read_ptr;
-            COMMS_sendFileInfo(hfile->metadata.ID,  hfile->metadata.chunk_size, num_packets);
-         
+            const uint32_t remaining_chunks = hfile->metadata.num_chunks - hfile->metadata.read_ptr;
+
+            COMMS_sendFileInfo(
+                hfile->metadata.ID,
+                hfile->metadata.chunk_size,
+                remaining_chunks
+            );
+
             hdownlink->prev_state = DOWNLINK_SEND_INFO;
-            hdownlink->state = DOWNLINK_WAIT_ACK;
+            hdownlink->state      = DOWNLINK_WAIT_ACK;
             break;
         }
+
         case DOWNLINK_SEND_CHUNK:
         {
-            uint8_t chunk_size = hfile->metadata.chunk_size;
-            uint8_t chunk[MAX_CHUNK_SIZE];
-
-            if (chunk_size > MAX_CHUNK_SIZE)
+            if (!COMMS_sendChunk(hfile))
             {
-                Serial.println("ERROR: Chunk exceeds max chunk size");
                 hdownlink->state = DOWNLINK_ERROR;
                 break;
             }
 
-            size_t bytes_read = FILE_read(hfile, chunk);
-
-            if (bytes_read == 0 || bytes_read > UINT8_MAX)
-            {
-                Serial.println("ERROR: No bytes read");
-                hdownlink->state = DOWNLINK_ERROR;
-                break;
-            }
-
-            COMMS_sendPacket(CHUNK_ID, chunk, (uint8_t)bytes_read);
-
-            Serial.println("Sent chunk");
-            Serial.print("Read Pointer: ");
-            Serial.println(hfile->metadata.read_ptr);
+            Serial.print("Sent chunk ");
+            Serial.print(hfile->metadata.read_ptr + 1);
+            Serial.print(" / ");
+            Serial.println(hfile->metadata.num_chunks);
 
             hdownlink->prev_state = DOWNLINK_SEND_CHUNK;
-            hdownlink->state = DOWNLINK_WAIT_ACK;
+            hdownlink->state      = DOWNLINK_WAIT_ACK;
             break;
         }
+
         case DOWNLINK_WAIT_ACK:
         {
             if (COMMS_getAck())
@@ -321,7 +383,6 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
 
                 if (hdownlink->prev_state == DOWNLINK_SEND_INFO)
                 {
-                    hdownlink->prev_state = DOWNLINK_WAIT_ACK;
                     hdownlink->state = DOWNLINK_SEND_CHUNK;
                 }
                 else if (hdownlink->prev_state == DOWNLINK_SEND_CHUNK)
@@ -330,20 +391,22 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
 
                     if (hfile->metadata.read_ptr >= hfile->metadata.num_chunks)
                     {
-                        hdownlink->prev_state = DOWNLINK_WAIT_ACK;
                         hdownlink->state = DOWNLINK_COMPLETE;
                     }
                     else
                     {
-                        hdownlink->prev_state = DOWNLINK_WAIT_ACK;
                         hdownlink->state = DOWNLINK_SEND_CHUNK;
                     }
                 }
                 else if (hdownlink->prev_state == DOWNLINK_COMPLETE)
                 {
-                        hdownlink->prev_state = DOWNLINK_WAIT_ACK;
-                        hdownlink->state = DOWNLINK_IDLE;
-                        hcomms.state = COMMS_IDLE;
+                    hdownlink->prev_state = DOWNLINK_IDLE;
+                    hdownlink->state      = DOWNLINK_IDLE;
+                    hcomms.state          = COMMS_IDLE;
+                }
+                else
+                {
+                    hdownlink->state = DOWNLINK_ERROR;
                 }
             }
             else
@@ -351,273 +414,301 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
                 Serial.println("ACK not received");
                 Serial.print("ACK retry: ");
                 Serial.println(hdownlink->ack_retries);
+
                 hdownlink->ack_retries++;
+
                 if (hdownlink->ack_retries >= MAX_ACK_RETRIES)
                 {
-                    Serial.println("ERROR: Exceeded max retries");
-                    hdownlink->ack_retries    = 0;
-                    hdownlink->state = DOWNLINK_ERROR;
+                    Serial.println("ERROR: Exceeded max ACK retries");
+                    hdownlink->ack_retries = 0;
+                    hdownlink->state       = DOWNLINK_ERROR;
                 }
                 else
                 {
                     hdownlink->state = hdownlink->prev_state;
-                    hdownlink->prev_state = DOWNLINK_WAIT_ACK;
                 }
             }
+
             break;
         }
+
         case DOWNLINK_COMPLETE:
         {
-            //Save the new read pointer to the SD card so we don't resend old data.
-            Serial.println("Downlink Complete");
+            Serial.println("Downlink complete");
+
             FILE_writeMetadata(hfile);
             FILE_close(hfile);
             FILE_open(hfile, FILE_OPEN_FOR_WRITE);
+
             COMMS_sendEndTransfer();
+
             hdownlink->prev_state = DOWNLINK_COMPLETE;
-            hdownlink->state = DOWNLINK_WAIT_ACK;
+            hdownlink->state      = DOWNLINK_WAIT_ACK;
             break;
         }
+
         case DOWNLINK_ERROR:
         {
             Serial.println("Downlink ERROR");
+
             FILE_writeMetadata(hfile);
             FILE_close(hfile);
             FILE_open(hfile, FILE_OPEN_FOR_WRITE);
-            hdownlink->prev_state = DOWNLINK_ERROR;
-            hdownlink->state = DOWNLINK_IDLE;
-            hcomms.state = COMMS_IDLE;
+
+            hdownlink->ack_retries = 0;
+            hdownlink->prev_state  = DOWNLINK_IDLE;
+            hdownlink->state       = DOWNLINK_IDLE;
+            hcomms.state           = COMMS_IDLE;
             break;
         }
+
         default:
         {
-            hdownlink->state = DOWNLINK_IDLE;
-            hcomms.state = COMMS_IDLE;
+            hdownlink->ack_retries = 0;
+            hdownlink->prev_state  = DOWNLINK_IDLE;
+            hdownlink->state       = DOWNLINK_IDLE;
+            hcomms.state           = COMMS_IDLE;
             break;
         }
     }
 }
 
-
-
 void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
 {
+    if (hfile == nullptr || huplink == nullptr)
+    {
+        Serial.println("ERROR: Null handler in COMMS_uplink");
+        hcomms.state = COMMS_IDLE;
+        return;
+    }
+
     switch (huplink->state)
     {
         case UPLINK_IDLE:
         {
+            huplink->timeout_ctr = 0;
+            huplink->file_chunks = 0;
+
             if (!FILE_clear(hfile))
             {
                 huplink->prev_state = UPLINK_IDLE;
-                huplink->state = UPLINK_ERROR;
+                huplink->state      = UPLINK_ERROR;
                 break;
             }
+
+            hfile->metadata.num_chunks = 0;
+            hfile->metadata.read_ptr   = 0;
+
             Serial.println(hfile->file_name);
             Serial.println("Successfully cleared file.");
+
             huplink->prev_state = UPLINK_IDLE;
-            huplink->state = UPLINK_RECEIVE_INFO;
+            huplink->state      = UPLINK_RECEIVE_INFO;
             break;
         }
+
         case UPLINK_RECEIVE_INFO:
         {
             if (COMMS_receiveFileInfo(hfile, huplink))
             {
-                
+                huplink->timeout_ctr = 0;
+
                 Serial.println("File info received");
-                Serial.println("File chunks: ");
+                Serial.print("File chunks: ");
                 Serial.println(huplink->file_chunks);
+
                 if (!FILE_open(hfile, FILE_OPEN_FOR_WRITE))
                 {
                     huplink->prev_state = UPLINK_RECEIVE_INFO;
-                    huplink->state = UPLINK_ERROR;
+                    huplink->state      = UPLINK_ERROR;
                     break;
                 }
+
                 huplink->prev_state = UPLINK_RECEIVE_INFO;
-                huplink->state = UPLINK_SEND_ACK;
+                huplink->state      = UPLINK_SEND_ACK;
             }
             else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
             {
-                Serial.println("Error: Uplink timeout");
+                Serial.println("Error: Uplink timeout while waiting for file info");
                 huplink->timeout_ctr = 0;
-                huplink->prev_state = UPLINK_RECEIVE_INFO;
-                huplink->state = UPLINK_ERROR;
+                huplink->prev_state  = UPLINK_RECEIVE_INFO;
+                huplink->state       = UPLINK_ERROR;
             }
             else
             {
-                
                 huplink->timeout_ctr++;
             }
+
             break;
         }
+
         case UPLINK_RECEIVE_PACKET:
         {
-            Packet_t packet;
-            if (COMMS_receivePacket(&packet))
+            if (COMMS_receiveChunk(hfile, huplink))
             {
                 huplink->timeout_ctr = 0;
-                /*
-                if (packet.length != hfile->metadata.chunk_size)
-                {
-                    Serial.println("Error: bad packet length expected " + String(hfile->metadata.chunk_size) + " but received " + String(packet.length));
-                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
-                    huplink->state = UPLINK_ERROR;
-                    break;
-                }
-                */
-                if (packet.packet_idx == hfile->metadata.num_chunks)
-                {
-                    //Packet matches write ptr
-                    FILE_write(hfile, packet.payload, hfile->metadata.chunk_size);
-                    Serial.println(hfile->metadata.num_chunks);
-                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
-                    huplink->state = UPLINK_SEND_ACK;
-                    break;
-                }
-                else if (packet.packet_idx < hfile->metadata.num_chunks)
-                {
-                    // Duplicate packet
-                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
-                    huplink->state = UPLINK_SEND_ACK;
-                    break;
-                }
-                else
-                {
-                    // missed a packet
-                    Serial.println("ERROR: Packet Lost expected " + String(packet.packet_idx) +" expected " + String(hfile->metadata.num_chunks));
-                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
-                    huplink->state = UPLINK_ERROR;
-                    break;
-                }
+                huplink->prev_state  = UPLINK_RECEIVE_PACKET;
+                huplink->state       = UPLINK_SEND_ACK;
             }
-            else 
+            else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
+            {
+                Serial.println("Error: Uplink timeout during packet receive");
+                huplink->timeout_ctr = 0;
+                huplink->prev_state  = UPLINK_RECEIVE_PACKET;
+                huplink->state       = UPLINK_ERROR;
+            }
+            else
             {
                 huplink->timeout_ctr++;
-                if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
-                {
-                    Serial.println("Error: Uplink timeout during receive packet");
-                    huplink->timeout_ctr = 0;
-                    huplink->prev_state = UPLINK_RECEIVE_PACKET;
-                    huplink->state = UPLINK_ERROR;
-                    break;
-                }
             }
+
             break;
         }
+
         case UPLINK_SEND_ACK:
         {
             Serial.println("Sending ACK");
             COMMS_sendAck();
-            if (hfile->metadata.num_chunks == huplink->file_chunks)
+
+            if (huplink->prev_state == UPLINK_RECEIVE_INFO)
             {
                 huplink->prev_state = UPLINK_SEND_ACK;
-                huplink->state = UPLINK_COMPLETE;
+                huplink->state      = UPLINK_RECEIVE_PACKET;
             }
             else if (huplink->prev_state == UPLINK_RECEIVE_PACKET)
             {
-                huplink->state = UPLINK_RECEIVE_PACKET;
-                huplink->prev_state = UPLINK_SEND_ACK;
-            }
-            else if (huplink->prev_state == UPLINK_RECEIVE_INFO)
-            {
-                huplink->state = UPLINK_RECEIVE_PACKET;
-                huplink->prev_state = UPLINK_SEND_ACK;
+                if (hfile->metadata.num_chunks >= huplink->file_chunks)
+                {
+                    huplink->prev_state = UPLINK_SEND_ACK;
+                    huplink->state      = UPLINK_COMPLETE;
+                }
+                else
+                {
+                    huplink->prev_state = UPLINK_SEND_ACK;
+                    huplink->state      = UPLINK_RECEIVE_PACKET;
+                }
             }
             else if (huplink->prev_state == UPLINK_COMPLETE)
             {
                 huplink->prev_state = UPLINK_SEND_ACK;
-                huplink->state = UPLINK_IDLE;
+                huplink->state      = UPLINK_IDLE;
+
                 hpayload.experiment_ready = true;
-                hcomms.state = COMMS_IDLE;
+                hcomms.state              = COMMS_IDLE;
+                Serial.println("Set experiment ready flag");
+
             }
             else
             {
                 huplink->state = UPLINK_ERROR;
-                huplink->prev_state = UPLINK_SEND_ACK;
             }
+
             break;
         }
+
         case UPLINK_COMPLETE:
         {
             FILE_writeMetadata(hfile);
             if (COMMS_getEndTransfer())
             {
-                Serial.println("Uplink Complete");
-                huplink->prev_state = UPLINK_COMPLETE;
-                huplink->state = UPLINK_SEND_ACK;
+                Serial.println("Uplink complete");
+                huplink->timeout_ctr = 0;
+                huplink->prev_state  = UPLINK_COMPLETE;
+                huplink->state       = UPLINK_SEND_ACK;
+                
             }
             else if (huplink->timeout_ctr >= UPLINK_TIMEOUT)
             {
-                huplink->timeout_ctr = 0;
                 Serial.println("Error: Expected end transfer");
-                huplink->prev_state = UPLINK_COMPLETE;
-                huplink->state = UPLINK_ERROR;    
+                huplink->timeout_ctr = 0;
+                huplink->prev_state  = UPLINK_COMPLETE;
+                huplink->state       = UPLINK_ERROR;
             }
             else
             {
                 huplink->timeout_ctr++;
             }
+
             break;
         }
+
         case UPLINK_ERROR:
         {
             Serial.println("Uplink ERROR");
-            huplink->prev_state = UPLINK_ERROR;
-            huplink->state = UPLINK_IDLE;
-            hcomms.state = COMMS_IDLE;
+
+            FILE_close(hfile);
+
+            huplink->timeout_ctr = 0;
+            huplink->file_chunks = 0;
+            huplink->prev_state  = UPLINK_IDLE;
+            huplink->state       = UPLINK_IDLE;
+            hcomms.state         = COMMS_IDLE;
             break;
         }
+
         default:
         {
-            huplink->state = UPLINK_IDLE;
-            hcomms.state = COMMS_IDLE;
+            huplink->timeout_ctr = 0;
+            huplink->prev_state  = UPLINK_IDLE;
+            huplink->state       = UPLINK_IDLE;
+            hcomms.state         = COMMS_IDLE;
             break;
         }
     }
-
 }
-
-
 
 bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
 {
-    UART_msg_t msg;
+    if (hfile == nullptr || huplink == nullptr)
+    {
+        Serial.println("ERROR: Null handler in COMMS_receiveFileInfo");
+        return false;
+    }
+
+    UART_msg_t msg = {0};
+
     if (!UART_receive(&Serial3, &msg, DEFAULT_UART_TIMEOUT_US))
     {
-        Serial.println("WARNING: No UART Received while waiting for file info");
         return false;
     }
+
     if (msg.id != UPLINK_FILE_INFO_ID)
     {
-        Serial.println("WARNING: Incorrect File info ID: " + String(msg.id));
+        Serial.println("WARNING: Incorrect file info ID: " + String(msg.id));
         return false;
     }
-    if (msg.length <  FILE_INFO_BYTES)
+
+    if (msg.length < FILE_INFO_BYTES)
     {
         Serial.println("WARNING: File info length too short");
         return false;
     }
+
     if (msg.payload[0] != hfile->metadata.ID)
     {
         Serial.println("WARNING: File info ID does not match metadata");
         return false;
     }
+
     memcpy(&hfile->metadata.chunk_size, &msg.payload[1], sizeof(uint32_t));
-    memcpy(&huplink->file_chunks, &msg.payload[5], sizeof(uint32_t));
+    memcpy(&huplink->file_chunks,       &msg.payload[5], sizeof(uint32_t));
+
+    hfile->metadata.num_chunks = 0;
+    hfile->metadata.read_ptr   = 0;
+
     return true;
 }
 
 void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks)
 {
-    UART_msg_t msg;
-    uint8_t data[WOD_INFO_BYTES];
+    UART_msg_t msg = {0};
+    uint8_t data[WOD_INFO_BYTES] = {0};
 
     msg.sof    = UART_SOF;
     msg.id     = WOD_INFO_ID;
     msg.length = WOD_INFO_BYTES;
 
     data[0] = fileID;
-    Serial.println(chunk_size);
-
     memcpy(&data[1], &chunk_size, sizeof(uint32_t));
     memcpy(&data[5], &num_chunks, sizeof(uint32_t));
 
@@ -625,56 +716,262 @@ void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks
 
     UART_transmit(&Serial3, &msg);
 
-    Serial.println("Sent WOD INFO");
+    Serial.println("Sent file info");
 }
 
-
-bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length)
+static bool COMMS_sendChunk(FILE_Handler_t* hfile)
 {
-    UART_msg_t msg = {0};
-    msg.sof    = UART_SOF;
-    msg.id     = id;
-    msg.length = length;
-    if (length > 0 && payload != NULL)
+    if (hfile == nullptr)
     {
-        memcpy(msg.payload, payload, length);
+        Serial.println("ERROR: Null file handler in COMMS_sendChunk");
+        return false;
     }
-    UART_transmit(&Serial3, &msg);
-    return true;
+
+    if (hfile->metadata.chunk_size > MAX_CHUNK_SIZE)
+    {
+        Serial.println("ERROR: Chunk size exceeds MAX_CHUNK_SIZE");
+        return false;
+    }
+
+    if (hfile->metadata.read_ptr > UINT16_MAX)
+    {
+        Serial.println("ERROR: Packet index exceeds uint16_t range");
+        return false;
+    }
+
+    uint8_t chunk[MAX_CHUNK_SIZE] = {0};
+    const size_t bytes_read = FILE_read(hfile, chunk);
+
+    if (bytes_read == 0)
+    {
+        Serial.println("ERROR: No bytes read from file");
+        return false;
+    }
+
+    if (bytes_read > MAX_CHUNK_SIZE || bytes_read > UINT8_MAX)
+    {
+        Serial.println("ERROR: Bytes read exceeds packet payload size");
+        return false;
+    }
+
+    Packet_t packet = {0};
+    packet.id         = CHUNK_ID;
+    packet.packet_idx = (uint16_t)hfile->metadata.read_ptr;
+    packet.length     = (uint8_t)bytes_read;
+
+    memcpy(packet.payload, chunk, bytes_read);
+
+    return PACKET_send(&packet, &Serial3);
+}
+
+static bool COMMS_receiveChunk(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink)
+{
+    if (hfile == nullptr || huplink == nullptr)
+    {
+        Serial.println("ERROR: Null handler in COMMS_receiveChunk");
+        return false;
+    }
+
+    Packet_t packet = {0};
+    packet.id = CHUNK_ID; //Filter for chunk packets in packet receive
+
+    if (!PACKET_receive(&packet, &Serial3))
+    {
+        
+        return false;
+    }
+
+    if (packet.id != CHUNK_ID)
+    {
+        Serial.println("WARNING: Incorrect chunk packet ID");
+        return false;
+    }
+
+    if (packet.length == 0)
+    {
+        Serial.println("WARNING: Empty chunk received");
+        return false;
+    }
+
+    if (packet.length > MAX_CHUNK_SIZE)
+    {
+        Serial.println("WARNING: Chunk exceeds MAX_CHUNK_SIZE");
+        return false;
+    }
+
+    const uint32_t expected_idx = hfile->metadata.num_chunks;
+
+    if (packet.packet_idx == expected_idx)
+    {
+        if (!FILE_write(hfile, packet.payload, packet.length))
+        {
+            Serial.println("ERROR: Failed to write uplink chunk");
+            return false;
+        }
+
+        hfile->metadata.num_chunks++;
+
+        Serial.print("Received uplink chunk ");
+        Serial.print(hfile->metadata.num_chunks);
+        Serial.print(" / ");
+        Serial.println(huplink->file_chunks);
+
+        return true;
+    }
+
+    if (packet.packet_idx < expected_idx)
+    {
+        // Duplicate packet. ACK it again so the sender can move on.
+        Serial.println("WARNING: Duplicate uplink packet received");
+        return true;
+    }
+
+    Serial.print("ERROR: Packet lost. Expected ");
+    Serial.print(expected_idx);
+    Serial.print(", got ");
+    Serial.println(packet.packet_idx);
+
+    return false;
+}
+
+bool COMMS_sendPacket(uint8_t id, const uint8_t* payload, uint8_t length)
+{
+    Packet_t packet = {0};
+
+    packet.id         = id;
+    packet.packet_idx = 0;
+    packet.length     = length;
+
+    if (length > 0 && payload != nullptr)
+    {
+        memcpy(packet.payload, payload, length);
+    }
+
+    return PACKET_send(&packet, &Serial3);
 }
 
 bool COMMS_receivePacket(Packet_t* packet)
 {
-    UART_msg_t msg = {0};
-    if (packet == NULL)
+    if (packet == nullptr)
     {
         Serial.println("Warning: NULL packet");
         return false;
     }
-    if (!UART_receive(&Serial3, &msg, 20000))
+
+    if (!PACKET_receive(packet, &Serial3))
     {
-        Serial.println("Warning: No packet received");
         return false;
     }
-    if (msg.id != CHUNK_ID)
+
+    if (packet->id != CHUNK_ID)
     {
-        Serial.println("Warning: Message ID not chunk ID. Received" + String(msg.id));
+        Serial.println("Warning: Packet ID not CHUNK_ID. Received " + String(packet->id));
         return false;
     }
-    if (msg.length < 3)
-    {
-        Serial.println("Warning: packet too small");
-        return false;
-    }
-    uint8_t packet_len = msg.length;
-    if (packet_len > MAX_PACKET_SIZE)
-    {
-        Serial.println("Warning: Packet exceeds maximum packet size");
-        return false;
-    }
-    //First two bytes of the packet are the packet index`
-    packet->packet_idx = ((uint16_t)msg.payload[0] << 8) | msg.payload[1];  
-    packet->length = packet_len;
-    memcpy(packet->payload, &msg.payload[2], packet->length);
+
     return true;
+}
+
+void COMMS_updateDebug(UART_msg_t* msg)
+{
+    switch (msg->id)
+    {
+        case(DEBUG_TEST_ACTIVATE):
+        {
+            hdebug.request_debug_mode = true;
+            break;
+        }
+        case (DEBUG_TEST_X_RW):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.xrw, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug x rw length too small");
+            }
+        }
+        case (DEBUG_TEST_Y_RW):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.yrw, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug y rw length too small");
+            }
+        }
+        case (DEBUG_TEST_Z_RW):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.zrw, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug z rw length too small");
+            }
+        }
+        case (DEBUG_TEST_X_MAG):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.xmag, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug x mag length too small");
+            }
+        }
+
+        case (DEBUG_TEST_Y_MAG):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.ymag, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug y mag length too small");
+            }
+        }
+        case (DEBUG_TEST_Z_MAG):
+        {
+            if (msg->length >= sizeof(float))
+            {
+                memcpy(&hdebug.adcs_cmd.zmag, msg->payload, sizeof(float));
+            }   
+            else
+            {
+                Serial.println("ERROR: debug z mag length too small");
+            }
+        }
+        case (DEBUG_TEST_PAYLOAD):
+        {
+            hdebug.payload_test = !hdebug.payload_test;
+        }
+        case (DEBUG_TEST_CAMERA):
+        {
+            hdebug.camera_test = !hdebug.camera_test;
+        }
+        case (DEBUG_TEST_ADCS_EFUSE):
+        {
+            hdebug.adcs_efuse_test = !hdebug.adcs_efuse_test;
+        }
+        case (DEBUG_TEST_PAYLOAD_EFUSE):
+        {
+            hdebug.payload_efuse_test = !hdebug.payload_efuse_test;
+        }
+        case (DEBUG_TEST_EXIT):
+        {
+            hdebug.debug_enable = false;
+            hdebug.request_debug_mode = false;
+        }
+        default:
+
+        break;
+    }
+
 }

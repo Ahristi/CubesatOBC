@@ -2,6 +2,9 @@
 
 SYSTEM_Handler_t hsys{INIT,INIT, true, LONG_PAUSE, 0, 0};
 
+
+
+
 void SYSTEM_Init(void)
 {
     pinMode(SYSTEM_LED0_PIN, OUTPUT); //D2 on the PCB
@@ -18,7 +21,7 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
     //Debug
     //EPS_debugPrint();
-    //SYSTEM_debugPrint();
+    SYSTEM_debugPrint();
     //ADCS_debugPrint();
     //Scheduler_debugPrint();
 }
@@ -81,38 +84,47 @@ void SYSTEM_stateMachine(void)
     {
         case INIT:
         {
+            hpayload.experiment_ready = true;
+            SYSTEM_setState(EXPERIMENT);
             if (SYSTEM_isEnteringState())
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
-                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);  
+                EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
                 heps.eFuse_msg_ready = true;
             }
             if ((EPS_telemetry.eFuse_states & heps.eFuse_states) == heps.eFuse_states)
             {
-                SYSTEM_setState(DETUMBLE);
+                SYSTEM_setState(IDLE);
             }
             else
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
-                //EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);  
+                EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
                 heps.eFuse_msg_ready = true;
             }
             break;
         }
         case DETUMBLE:
         {
-            if (SYSTEM_isEnteringState())
-            {
-                //Nothing
-            }
-            if (hadcs.detumble_scale < DETUMBLE_RATE_THRESHOLD)
-            {
-                SYSTEM_setState(IDLE);
-            }
+            SYSTEM_setState(IDLE);
+            /*
+                if (SYSTEM_isEnteringState())
+                {
+                    //Nothing
+                    SYSTEM_setState(IDLE); //Skip detumble mode for testing without ADCSs
+                }
+                if (hadcs.detumble_scale < DETUMBLE_RATE_THRESHOLD)
+                {
+                    SYSTEM_setState(IDLE);
+                }
+            */
             break;
         }
         case IDLE:
         {
+            
             if (SYSTEM_isEnteringState())
             {
                 //Nothing
@@ -123,7 +135,16 @@ void SYSTEM_stateMachine(void)
             }
             else if (hpayload.experiment_ready)
             {
+                Serial.println("Experiment Received!");
+                hpayload.experiment_finished = false;
                 SYSTEM_setState(EXPERIMENT);
+                hpayload.experiment_ready = false;
+            }
+            else if (hdebug.request_debug_mode)
+            {
+                hdebug.debug_enable = true;
+                Serial.println("Enter debug mode...");
+                SYSTEM_setState(DEBUG);
             }
             break;
         }
@@ -132,16 +153,16 @@ void SYSTEM_stateMachine(void)
             if (SYSTEM_isEnteringState())
             {
                 hpayload.start_experiment = true;
-                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             }
             if ((EPS_telemetry.eFuse_states & heps.eFuse_states) != heps.eFuse_states)
             {
-                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
+                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
                 heps.eFuse_msg_ready = true;
             }   
             if (hpayload.experiment_finished)
             {
-                EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
+               //EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
                 heps.eFuse_msg_ready = true;
                 SYSTEM_setState(IDLE);
             }
@@ -153,9 +174,20 @@ void SYSTEM_stateMachine(void)
             {
                 // Optional: enable radio / start downlink
             }
-
+            if (hcomms.state == COMMS_IDLE)
+            {
+                SYSTEM_setState(IDLE);
+            }
             // Handle comms link
             break;
+        }
+        case DEBUG:
+        {
+            if (hdebug.debug_enable == false)
+            {
+                Serial.println("Exiting debug mode...");
+                SYSTEM_setState(IDLE);
+            }
         }
         default:
         {
@@ -269,3 +301,4 @@ void SYSTEM_debugPrint(void)
 
     Serial.println("==================================");
 }
+

@@ -5,6 +5,8 @@
 #include "logging.h"
 
 //-------------Defines-------------
+#define EPS_TASK_PERIOD_MS  5
+
 #define EPS_EFUSE_CONTROL_CMD_ID        0x47
 #define EPS_CONVERTER_CONTROL_CMD_ID    0x65
 #define EPS_WATCHDOG_ID                 0x69

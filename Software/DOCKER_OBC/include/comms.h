@@ -10,7 +10,9 @@
 #include "packet.h"
 
 
+
 //-------------DEFINES--------------
+#define COMMS_TASK_PERIOD_MS 5
 #define COMMS_BAUDRATE 3000000
 #define BEACON_TICK_OC 200
 
@@ -23,6 +25,8 @@
 #define EXPERIMENT_COMMAND_ID  0x13
 #define RESULT_REQUEST_ID      0x14
 
+
+#define DEBUG_MSG_ID           0x30
 #define BEACON_MSG_ID          0x65
 #define WOD_INFO_ID            0x66
 #define UPLINK_FILE_INFO_ID    0x66
@@ -32,11 +36,12 @@
 #define END_TRANSFER_ID        0x70
 
 
+
 #define WOD_INFO_BYTES  9
 #define FILE_INFO_BYTES 9
 #define MAX_ACK_RETRIES 300
 #define UPLINK_TIMEOUT  300
-
+#define COMMS_UART_BUFFER_SIZE 1024
 
 //-------------Typedefs and Enums--------------
 typedef struct __attribute__((packed)) {
@@ -176,4 +181,5 @@ void COMMS_uplink(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
 bool COMMS_receivePacket(Packet_t* packet);
 bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
+void COMMS_updateDebug(UART_msg_t* msg);
 #endif

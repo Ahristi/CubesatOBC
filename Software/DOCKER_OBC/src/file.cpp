@@ -44,6 +44,7 @@ bool FILE_initialiseMetadata(FILE_Handler_t* hfile)
     }
     uint32_t bytes = hfile->file.size();
     Serial.println("Filesize: " + String(bytes));
+    Serial.println("Chunk Size " + String(hfile->metadata.chunk_size));
     hfile->metadata.num_chunks = bytes / hfile->metadata.chunk_size;
     hfile->file.close();
     return true;
@@ -156,8 +157,10 @@ bool FILE_writeMetadata(FILE_Handler_t* hfile)
 size_t FILE_read(FILE_Handler_t *hfile, uint8_t* chunk)
 {
     uint32_t offset = hfile->metadata.read_ptr * hfile->metadata.chunk_size;
+    Serial.println("File offset: " + String(offset));
     if (!hfile->file.seek(offset))
     {
+        Serial.println("Invalid offset");
         return 0;
     }
     size_t bytes_read = hfile->file.read((uint8_t *)chunk, hfile->metadata.chunk_size);

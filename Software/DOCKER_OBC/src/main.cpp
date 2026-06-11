@@ -21,11 +21,11 @@ void setup() {
     FILE_Init();
     CAN_Init();
     COMMS_Init();
-    LOGGING_Init();
     Scheduler_init();
     EPS_Init();
     ADCS_Init();
     PAYLOAD_Init();
+    LOGGING_Init();
     SYSTEM_Init();
 
 }

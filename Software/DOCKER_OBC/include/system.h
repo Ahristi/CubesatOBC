@@ -8,6 +8,7 @@
 #include "logging.h"
 #include "scheduler.h"
 #include "math.h"
+#include "debug.h"
 //-------------Defines-------------
 #define SYSTEM_LED0_PIN     43
 #define SYSTEM_LED1_PIN     42
@@ -18,10 +19,9 @@
 #define OBC_WATCHDOG_CODE   0x64
 
 
-#define PAYLOAD_TIMEOUT_TICKS 120000 //Around 10 minutes
 
-//-------------Typedefs and Enums-------------
-typedef enum{
+typedef enum{//-------------Typedefs and Enums-------------
+
     LONG_PAUSE,
     FIRST_PULSE,
     SHORT_PAUSE,
@@ -33,7 +33,8 @@ typedef enum{
     DETUMBLE,
     IDLE,
     EXPERIMENT,
-    LINK
+    LINK,
+    DEBUG
 }SYSTEM_State_t;
 
 
@@ -49,6 +50,9 @@ typedef struct{
 
 
 
+
+
+
 //-------------Function Prototypes-------------
 void SYSTEM_Init(void);
 void SYSTEM_task(void);
@@ -57,6 +61,7 @@ void SYSTEM_watchdog(void);
 void SYSTEM_stateMachine(void);
 void SYSTEM_setState(SYSTEM_State_t new_state);
 bool SYSTEM_isEnteringState(void);
+void SYSTEM_debugUpdate(uint8_t ID);
 void SYSTEM_debugPrint(void);
 //-------------Variables-------------
 
