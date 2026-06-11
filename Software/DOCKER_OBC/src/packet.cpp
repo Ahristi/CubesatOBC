@@ -60,7 +60,7 @@ bool PACKET_receive(Packet_t* packet, HardwareSerialIMXRT* port)
 
     if (!UART_receive(port, &msg, DEFAULT_UART_TIMEOUT_US))
     {
-        Serial.println("WARNING: No Packet Received");
+        //Serial.println("WARNING: No Packet Received");
         return false;
     }
 

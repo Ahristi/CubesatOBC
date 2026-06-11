@@ -47,9 +47,9 @@ void PAYLOAD_Init()
     hpayload.experiment_file = experiment_file;
     hpayload.results_file    = results_file;
     FILE_initialiseMetadata(&hpayload.experiment_file);
-    //FILE_initialiseMetadata(&hpayload.results_file);
     Serial.println("Experiment File Chunks: " + String(hpayload.experiment_file.metadata.num_chunks));
-    Serial.println("Payload initialised on Serial4");
+    FILE_initialiseMetadata(&hpayload.results_file);
+    Serial.println("Result File Chunks: " + String(hpayload.results_file.metadata.num_chunks));
     hpayload.serial = &Serial2;
     hpayload.serial->addMemoryForRead(payload_serial_buffer, PAYLOAD_UART_BUFFER_SIZE);
     hpayload.serial->begin(PAYLOAD_BAUD_RATE);
