@@ -87,17 +87,13 @@ typedef struct __attribute__((packed)) {
     float    x_mag_current;
     float    y_mag_current;
     float    z_mag_current;
-    
     float    x_mag_field_sense;
     float    y_mag_field_sense;
     float    z_mag_field_sense;
-    
     float    x_mag_field_filt;
     float    y_mag_field_filt;
     float    z_mag_field_filt;
-
     float    sun_sense[6];
-
     float    detumble_scale;
     
     uint16_t EPS_Faults;
@@ -105,6 +101,7 @@ typedef struct __attribute__((packed)) {
     uint16_t ADCS_Faults;
     uint16_t Payload_Faults;
     uint16_t Comms_Faults;
+    uint8_t  satellite_state;
 }COMMS_BeaconData_t;
 
 
@@ -117,6 +114,7 @@ typedef enum {
     COMMS_RESULTS_DOWNLINK,
     COMMS_EXPERIMENT_UPLINK,
     COMMS_COMMAND_UPLINK,
+    COMMS_FINISH_LINK
 }COMMS_state_t;
 
 
@@ -155,6 +153,7 @@ typedef struct {
 
 typedef struct{
     uint32_t beacon_tick;
+    COMMS_state_t prev_state;
     COMMS_state_t state;
 }COMMS_Handler_t;
 
@@ -170,7 +169,7 @@ void COMMS_downLinkHandler(void);
 void COMMS_startDownlink(const char *filename, uint16_t file_id);
 void COMMS_wodDownlinkHandler(void);
 void COMMS_sendFileInfo(uint8_t fileID, uint32_t chunk_size, uint32_t num_chunks);
-bool COMMS_getLink(COMMS_Handler_t* hcomms);
+bool COMMS_getLink();
 bool COMMS_sendWOD(void);
 bool COMMS_getAck(void);
 bool COMMS_sendAck(void);
@@ -182,4 +181,5 @@ bool COMMS_sendPacket(uint8_t id, const uint8_t *payload, uint8_t length);
 bool COMMS_receivePacket(Packet_t* packet);
 bool COMMS_receiveFileInfo(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* huplink);
 void COMMS_updateDebug(UART_msg_t* msg);
+void COMMS_updateState(COMMS_state_t state);
 #endif

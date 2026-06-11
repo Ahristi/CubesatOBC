@@ -21,7 +21,7 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
     //Debug
     //EPS_debugPrint();
-    SYSTEM_debugPrint();
+    //SYSTEM_debugPrint();
     //ADCS_debugPrint();
     //Scheduler_debugPrint();
 }
@@ -84,8 +84,8 @@ void SYSTEM_stateMachine(void)
     {
         case INIT:
         {
-            hpayload.experiment_ready = true;
-            SYSTEM_setState(EXPERIMENT);
+            //hpayload.experiment_ready = true;
+            //SYSTEM_setState(EXPERIMENT);
             if (SYSTEM_isEnteringState())
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
@@ -153,16 +153,16 @@ void SYSTEM_stateMachine(void)
             if (SYSTEM_isEnteringState())
             {
                 hpayload.start_experiment = true;
-                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
+                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Enable payload
             }
             if ((EPS_telemetry.eFuse_states & heps.eFuse_states) != heps.eFuse_states)
             {
-                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
+                EPS_enableEFuse(EPS_EFUSE_6V_CH1);   // Retry Enable payload
                 heps.eFuse_msg_ready = true;
             }   
             if (hpayload.experiment_finished)
             {
-               //EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
+                EPS_disableEFuse(EPS_EFUSE_6V_CH1);   // Turn off payload
                 heps.eFuse_msg_ready = true;
                 SYSTEM_setState(IDLE);
             }

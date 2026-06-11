@@ -44,7 +44,7 @@ void COMMS_task()
     {
         case COMMS_IDLE:
         {
-            if (!COMMS_getLink(&hcomms))
+            if (!COMMS_getLink())
             {
                 hcomms.beacon_tick++;
 
@@ -57,7 +57,7 @@ void COMMS_task()
                 break;
             }
 
-            // Intentionally fall through. COMMS_getLink() selected the next state.
+            break;
         }
 
         case COMMS_WOD_DOWNLINK:
@@ -77,10 +77,19 @@ void COMMS_task()
             COMMS_uplink(&hpayload.experiment_file, &huplink_experiment);
             break;
         }
+        case COMMS_FINISH_LINK:
+        {
+            if (hcomms.prev_state == COMMS_WOD_DOWNLINK)
+            {
+                FILE_open(&wod, FILE_OPEN_FOR_WRITE);
+            }
 
+            COMMS_updateState(COMMS_IDLE);
+            break;
+        }
         default:
         {
-            hcomms.state = COMMS_IDLE;
+            COMMS_updateState(COMMS_IDLE);
             break;
         }
     }
@@ -167,16 +176,12 @@ void COMMS_packBeacon(COMMS_BeaconData_t* data)
     data->ADCS_Faults           = satellite_faults.ADCS_Faults;
     data->Payload_Faults        = satellite_faults.Payload_Faults;
     data->Comms_Faults          = satellite_faults.Comms_Faults;
+    data->satellite_state       = hsys.state;
 }
 
 
-bool COMMS_getLink(COMMS_Handler_t* hcomms)
+bool COMMS_getLink()
 {
-    if (hcomms == nullptr)
-    {
-        Serial.println("ERROR: Null comms handler");
-        return false;
-    }
 
     UART_msg_t msg = {0};
 
@@ -195,21 +200,22 @@ bool COMMS_getLink(COMMS_Handler_t* hcomms)
 
     if (msg.id == WOD_REQUEST_ID)
     {
-        hcomms->state = COMMS_WOD_DOWNLINK;
+        Serial.println("Received comms wod downlink");
+        COMMS_updateState(COMMS_WOD_DOWNLINK);
         return true;
     }
 
     if (msg.id == EXPERIMENT_COMMAND_ID)
     {
         Serial.println("Experiment uplink begin");
-        hcomms->state = COMMS_EXPERIMENT_UPLINK;
+        COMMS_updateState(COMMS_EXPERIMENT_UPLINK);
         return true;
     }
 
     if (msg.id == RESULT_REQUEST_ID)
     {
         Serial.println("Payload results downlink begin");
-        hcomms->state = COMMS_RESULTS_DOWNLINK;
+        COMMS_updateState(COMMS_RESULTS_DOWNLINK);
         return true;
     }
 
@@ -317,7 +323,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
     if (hfile == nullptr || hdownlink == nullptr)
     {
         Serial.println("ERROR: Null handler in COMMS_downlink");
-        hcomms.state = COMMS_IDLE;
+        COMMS_updateState(COMMS_IDLE);
         return;
     }
 
@@ -326,7 +332,9 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
         case DOWNLINK_IDLE:
         {
             hdownlink->ack_retries = 0;
-
+            Serial.println(hfile->file_name);
+            Serial.println("Num Chunks: " + String(hfile->metadata.num_chunks));
+            Serial.println("Read Ptr: " + String(hfile->metadata.read_ptr));
             if (hfile->metadata.read_ptr >= hfile->metadata.num_chunks)
             {
                 hdownlink->prev_state = DOWNLINK_IDLE;
@@ -335,6 +343,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
             else
             {
                 hdownlink->prev_state = DOWNLINK_IDLE;
+                FILE_open(hfile, FILE_OPEN_FOR_READ);
                 hdownlink->state      = DOWNLINK_SEND_INFO;
             }
 
@@ -350,6 +359,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
                 hfile->metadata.chunk_size,
                 remaining_chunks
             );
+
 
             hdownlink->prev_state = DOWNLINK_SEND_INFO;
             hdownlink->state      = DOWNLINK_WAIT_ACK;
@@ -402,7 +412,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
                 {
                     hdownlink->prev_state = DOWNLINK_IDLE;
                     hdownlink->state      = DOWNLINK_IDLE;
-                    hcomms.state          = COMMS_IDLE;
+                    COMMS_updateState(COMMS_FINISH_LINK);
                 }
                 else
                 {
@@ -438,7 +448,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
 
             FILE_writeMetadata(hfile);
             FILE_close(hfile);
-            FILE_open(hfile, FILE_OPEN_FOR_WRITE);
+            //FILE_open(hfile, FILE_OPEN_FOR_WRITE);
 
             COMMS_sendEndTransfer();
 
@@ -453,12 +463,12 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
 
             FILE_writeMetadata(hfile);
             FILE_close(hfile);
-            FILE_open(hfile, FILE_OPEN_FOR_WRITE);
+            //FILE_open(hfile, FILE_OPEN_FOR_WRITE);
 
             hdownlink->ack_retries = 0;
             hdownlink->prev_state  = DOWNLINK_IDLE;
             hdownlink->state       = DOWNLINK_IDLE;
-            hcomms.state           = COMMS_IDLE;
+            COMMS_updateState(COMMS_FINISH_LINK);
             break;
         }
 
@@ -467,7 +477,7 @@ void COMMS_downlink(FILE_Handler_t* hfile, COMMS_downlinkHandler_t* hdownlink)
             hdownlink->ack_retries = 0;
             hdownlink->prev_state  = DOWNLINK_IDLE;
             hdownlink->state       = DOWNLINK_IDLE;
-            hcomms.state           = COMMS_IDLE;
+            COMMS_updateState(COMMS_FINISH_LINK);
             break;
         }
     }
@@ -974,4 +984,12 @@ void COMMS_updateDebug(UART_msg_t* msg)
         break;
     }
 
+}
+void COMMS_updateState(COMMS_state_t new_state)
+{
+    if (hcomms.state != new_state)
+    {
+        hcomms.prev_state = hcomms.state;
+        hcomms.state = new_state;
+    }
 }

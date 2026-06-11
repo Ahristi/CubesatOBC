@@ -29,12 +29,12 @@ typedef enum{//-------------Typedefs and Enums-------------
 }SYSTEM_HeartbeatState_t;
 
 typedef enum{
-    INIT,
-    DETUMBLE,
-    IDLE,
-    EXPERIMENT,
-    LINK,
-    DEBUG
+    INIT        = 0x00,
+    DETUMBLE    = 0x01,
+    IDLE        = 0x02,
+    EXPERIMENT  = 0x03,
+    LINK        = 0x04,
+    DEBUG       = 0x05
 }SYSTEM_State_t;
 
 
@@ -48,7 +48,7 @@ typedef struct{
     uint8_t watchdog_tick_count;
 }SYSTEM_Handler_t;
 
-
+extern SYSTEM_Handler_t hsys;
 
 
 

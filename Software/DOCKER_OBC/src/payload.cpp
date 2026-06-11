@@ -53,6 +53,9 @@ void PAYLOAD_Init()
     hpayload.serial = &Serial2;
     hpayload.serial->addMemoryForRead(payload_serial_buffer, PAYLOAD_UART_BUFFER_SIZE);
     hpayload.serial->begin(PAYLOAD_BAUD_RATE);
+
+    //OVERWRITE READ POINTER
+    hpayload.results_file.metadata.read_ptr = 0;
 }
 
 void PAYLOAD_task()
@@ -279,14 +282,12 @@ void PAYLOAD_task()
                 Serial.print(hpayload.results_file.metadata.read_ptr + 1);
                 Serial.print(" / ");
                 Serial.println(hpayload.num_result_chunks);
-
-                hpayload.results_file.metadata.read_ptr++;
                 hpayload.timeout_ctr = 0;
                 PAYLOAD_setState(PAYLOAD_SEND_ACK);
             }
             else if (hpayload.timeout_ctr >= PAYLOAD_ACK_TIMEOUT_COUNT)
             {
-                Serial.println("ERROR: Timed out waiting for result chunk");
+                //Serial.println("ERROR: Timed out waiting for result chunk");
                 hpayload.timeout_ctr = 0;
                 PAYLOAD_setState(PAYLOAD_ERROR);
             }
@@ -333,6 +334,7 @@ void PAYLOAD_task()
                 Serial.println("Payload result transfer complete");
 
                 FILE_writeMetadata(&hpayload.results_file);
+                FILE_close(&hpayload.results_file);
 
                 hpayload.experiment_finished = true;
                 hpayload.start_experiment    = false;
@@ -346,6 +348,7 @@ void PAYLOAD_task()
 
         case PAYLOAD_END:
         {
+
             if (PAYLOAD_getEndTransfer())
             {
                 Serial.println("Received payload end transfer");
