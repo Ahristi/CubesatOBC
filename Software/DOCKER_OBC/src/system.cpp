@@ -21,7 +21,7 @@ void SYSTEM_task(void)
     SYSTEM_stateMachine();
     //Debug
     //EPS_debugPrint();
-    //SYSTEM_debugPrint();
+    SYSTEM_debugPrint();
     //ADCS_debugPrint();
     //Scheduler_debugPrint();
 }
@@ -84,12 +84,10 @@ void SYSTEM_stateMachine(void)
     {
         case INIT:
         {
-            //hpayload.experiment_ready = true;
-            //SYSTEM_setState(EXPERIMENT);
             if (SYSTEM_isEnteringState())
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Enable ADCS
-                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);  
+                EPS_disableEFuse(EPS_EFUSE_6V_CH1);  //Disable payload
                 EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Enable comms board
                 heps.eFuse_msg_ready = true;
             }
@@ -100,7 +98,7 @@ void SYSTEM_stateMachine(void)
             else
             {
                 EPS_enableEFuse(EPS_EFUSE_5V_CH1);   // Retry Enable ADCS
-                //EPS_enableEFuse(EPS_EFUSE_6V_CH1);  
+                EPS_disableEFuse(EPS_EFUSE_6V_CH1);  //Disable payload
                 EPS_enableEFuse(EPS_EFUSE_12V_CH2);  // Retry Enable comms board
                 heps.eFuse_msg_ready = true;
             }
@@ -183,11 +181,17 @@ void SYSTEM_stateMachine(void)
         }
         case DEBUG:
         {
-            if (hdebug.debug_enable == false)
+            if (hdebug.debug_enable  == false)
             {
                 Serial.println("Exiting debug mode...");
-                SYSTEM_setState(IDLE);
+                SYSTEM_setState(INIT);
             }
+            else if ((EPS_telemetry.eFuse_states & heps.eFuse_states) != heps.eFuse_states)
+            {
+                Serial.println("Update efuses");
+                heps.eFuse_msg_ready = true;
+            }
+            break;
         }
         default:
         {
@@ -252,7 +256,9 @@ void SYSTEM_debugPrint(void)
     case LINK:
         Serial.println("LINK");
         break;
-
+    case DEBUG:
+        Serial.println("DEBUG");
+        break;
     default:
         Serial.println("UNKNOWN");
         break;

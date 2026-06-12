@@ -45,7 +45,7 @@ bool FILE_initialiseMetadata(FILE_Handler_t* hfile)
     uint32_t bytes = hfile->file.size();
     Serial.println("Filesize: " + String(bytes));
     Serial.println("Chunk Size " + String(hfile->metadata.chunk_size));
-    hfile->metadata.num_chunks = bytes / hfile->metadata.chunk_size;
+    //hfile->metadata.num_chunks = bytes / hfile->metadata.chunk_size;
     hfile->file.close();
     return true;
 }
@@ -268,6 +268,16 @@ bool FILE_open(FILE_Handler_t *hfile, FILE_OpenState_t read_write)
     }
 
     hfile->read_write = read_write;
+    hfile->file_size = hfile->file.size();
+
+    hfile->metadata.num_chunks =
+        (hfile->file_size + hfile->metadata.chunk_size - 1) /
+        hfile->metadata.chunk_size;
+
+    Serial.println("File size: " + String(hfile->file_size));
+    Serial.println("Chunk size: " + String(hfile->metadata.chunk_size));
+    Serial.println("Calculated chunks: " + String(hfile->metadata.num_chunks));
+
     return true;
 }
 

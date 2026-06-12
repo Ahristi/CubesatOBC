@@ -21,6 +21,7 @@ void DEBUG_Task(void)
         if (hdebug.adcs_efuse_test)
         {
             EPS_enableEFuse(EPS_EFUSE_5V_CH1);
+
         }
         else
         {

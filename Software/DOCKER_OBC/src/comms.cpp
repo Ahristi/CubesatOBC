@@ -221,10 +221,120 @@ bool COMMS_getLink()
 
     if (msg.id == DEBUG_MSG_ID)
     {
+        Serial.println("Debug Message Received.");
         COMMS_updateDebug(&msg);
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_ACTIVATE)
+    {
+        hdebug.request_debug_mode = true;
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_X_RW)
+    {
+        if (msg.length >= sizeof(float))
+        {
+            memcpy(&hdebug.adcs_cmd.xrw, msg.payload, sizeof(float));
+        }   
+        else
+        {
+            Serial.println("ERROR: debug x rw length too small");
+        }
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_Y_RW)
+    {
+        if (msg.length >= sizeof(float))
+        {
+            memcpy(&hdebug.adcs_cmd.yrw, msg.payload, sizeof(float));
+        }   
+        else
+        {
+            Serial.println("ERROR: debug y rw length too small");
+        }
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_Z_RW)
+    {
+        if (msg.length >= sizeof(float))
+        {
+            memcpy(&hdebug.adcs_cmd.zrw, msg.payload, sizeof(float));
+        }   
+        else
+        {
+            Serial.println("ERROR: debug z rw length too small");
+        }
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_X_MAG)
+    {
+        if (msg.length >= sizeof(float))
+        {
+            memcpy(&hdebug.adcs_cmd.xmag, msg.payload, sizeof(float));
+        }   
+        else
+        {
+            Serial.println("ERROR: debug x mag length too small");
+        }
+        return true;
     }
 
-    Serial.println("Warning: Bad command received from comms board.");
+    if (msg.id == DEBUG_TEST_Y_MAG)
+    {
+        if (msg.length >= sizeof(float))
+        {
+            memcpy(&hdebug.adcs_cmd.ymag, msg.payload, sizeof(float));
+        }   
+        else
+        {
+            Serial.println("ERROR: debug y mag length too small");
+        }
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_Z_MAG)
+    {
+        if (msg.length >= sizeof(float))
+        {
+            memcpy(&hdebug.adcs_cmd.zmag, msg.payload, sizeof(float));
+        }   
+        else
+        {
+            Serial.println("ERROR: debug z mag length too small");
+        }
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_PAYLOAD)
+    {
+        Serial.println("DEBUG: Test Payload");
+        hdebug.payload_test = !hdebug.payload_test;
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_CAMERA)
+    {
+        Serial.println("DEBUG: Test Camera");
+        hdebug.camera_test = !hdebug.camera_test;
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_ADCS_EFUSE)
+    {
+        Serial.println("DEBUG: toggle ADCS eFuse");
+        hdebug.adcs_efuse_test = !hdebug.adcs_efuse_test;
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_PAYLOAD_EFUSE)
+    {
+        Serial.println("DEBUG: toggle payload eFuse");
+        hdebug.payload_efuse_test = !hdebug.payload_efuse_test;
+        return true;
+    }
+    if (msg.id == DEBUG_TEST_EXIT)
+    {
+        Serial.println("DEBUG: Requesting Debug Exit");
+        hdebug.debug_enable = false;
+        hdebug.request_debug_mode = false;
+        return true;
+    }
+    Serial.println("Warning: Bad command received from comms board ID was" + String(msg.id));
     return false;
 }
 
@@ -819,8 +929,6 @@ static bool COMMS_receiveChunk(FILE_Handler_t* hfile, COMMS_uplinkHandler_t* hup
             return false;
         }
 
-        hfile->metadata.num_chunks++;
-
         Serial.print("Received uplink chunk ");
         Serial.print(hfile->metadata.num_chunks);
         Serial.print(" / ");
@@ -884,6 +992,7 @@ bool COMMS_receivePacket(Packet_t* packet)
 
 void COMMS_updateDebug(UART_msg_t* msg)
 {
+    Serial.println("Message ID: " + String(msg->id));
     switch (msg->id)
     {
         case(DEBUG_TEST_ACTIVATE):
@@ -901,6 +1010,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
             {
                 Serial.println("ERROR: debug x rw length too small");
             }
+            break;
         }
         case (DEBUG_TEST_Y_RW):
         {
@@ -912,6 +1022,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
             {
                 Serial.println("ERROR: debug y rw length too small");
             }
+            break;
         }
         case (DEBUG_TEST_Z_RW):
         {
@@ -923,6 +1034,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
             {
                 Serial.println("ERROR: debug z rw length too small");
             }
+            break;
         }
         case (DEBUG_TEST_X_MAG):
         {
@@ -934,6 +1046,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
             {
                 Serial.println("ERROR: debug x mag length too small");
             }
+            break;
         }
 
         case (DEBUG_TEST_Y_MAG):
@@ -946,6 +1059,7 @@ void COMMS_updateDebug(UART_msg_t* msg)
             {
                 Serial.println("ERROR: debug y mag length too small");
             }
+            break;
         }
         case (DEBUG_TEST_Z_MAG):
         {
@@ -957,27 +1071,38 @@ void COMMS_updateDebug(UART_msg_t* msg)
             {
                 Serial.println("ERROR: debug z mag length too small");
             }
+            break;
         }
         case (DEBUG_TEST_PAYLOAD):
         {
+            Serial.println("DEBUG: Test Payload");
             hdebug.payload_test = !hdebug.payload_test;
+            break;
         }
         case (DEBUG_TEST_CAMERA):
         {
+            Serial.println("DEBUG: Test Camera");
             hdebug.camera_test = !hdebug.camera_test;
+            break;
         }
         case (DEBUG_TEST_ADCS_EFUSE):
         {
+            Serial.println("DEBUG: toggle ADCS eFuse");
             hdebug.adcs_efuse_test = !hdebug.adcs_efuse_test;
+            break;
         }
         case (DEBUG_TEST_PAYLOAD_EFUSE):
         {
+            Serial.println("DEBUG: toggle payload eFuse");
             hdebug.payload_efuse_test = !hdebug.payload_efuse_test;
+            break;
         }
         case (DEBUG_TEST_EXIT):
         {
+            Serial.println("DEBUG: Requesting Debug Exit");
             hdebug.debug_enable = false;
             hdebug.request_debug_mode = false;
+            break;
         }
         default:
 
@@ -985,6 +1110,8 @@ void COMMS_updateDebug(UART_msg_t* msg)
     }
 
 }
+
+
 void COMMS_updateState(COMMS_state_t new_state)
 {
     if (hcomms.state != new_state)

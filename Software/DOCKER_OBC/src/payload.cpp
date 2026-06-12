@@ -279,7 +279,7 @@ void PAYLOAD_task()
             if (PAYLOAD_receiveChunk())
             {
                 Serial.print("Received result chunk ");
-                Serial.print(hpayload.results_file.metadata.read_ptr + 1);
+                Serial.print(hpayload.results_file.metadata.num_chunks);
                 Serial.print(" / ");
                 Serial.println(hpayload.num_result_chunks);
                 hpayload.timeout_ctr = 0;
@@ -320,7 +320,7 @@ void PAYLOAD_task()
             }
             else if (hpayload.prev_state == PAYLOAD_GET_RESULTS)
             {
-                if (hpayload.results_file.metadata.read_ptr >= hpayload.num_result_chunks)
+                if (hpayload.results_file.metadata.num_chunks>= hpayload.num_result_chunks)
                 {
                     PAYLOAD_setState(PAYLOAD_END);
                 }
@@ -493,10 +493,10 @@ bool PAYLOAD_receiveChunk()
         return false;
     }
 
-    if (packet.packet_idx != hpayload.results_file.metadata.read_ptr)
+    if (packet.packet_idx != hpayload.results_file.metadata.num_chunks)
     {
         Serial.print("WARNING: Unexpected result packet index. Expected ");
-        Serial.print(hpayload.results_file.metadata.read_ptr);
+        Serial.print(hpayload.results_file.metadata.num_chunks);
         Serial.print(", got ");
         Serial.println(packet.packet_idx);
         return false;
