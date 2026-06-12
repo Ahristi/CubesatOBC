@@ -14,12 +14,12 @@ typedef enum{
     DEBUG_TEST_Z_RW             = 0x33,
     DEBUG_TEST_X_MAG            = 0x34,
     DEBUG_TEST_Y_MAG            = 0x35,
-    DEBUG_TEST_Z_MAG            = 0x37,
-    DEBUG_TEST_PAYLOAD          = 0x38,
-    DEBUG_TEST_CAMERA           = 0x39,
-    DEBUG_TEST_ADCS_EFUSE       = 0x40,
-    DEBUG_TEST_PAYLOAD_EFUSE    = 0x41,
-    DEBUG_TEST_EXIT             = 0x42,
+    DEBUG_TEST_Z_MAG            = 0x36,
+    DEBUG_TEST_PAYLOAD          = 0x37,
+    DEBUG_TEST_CAMERA           = 0x38,
+    DEBUG_TEST_ADCS_EFUSE       = 0x39,
+    DEBUG_TEST_PAYLOAD_EFUSE    = 0x3A,
+    DEBUG_TEST_EXIT             = 0x3B,
 }Debug_ID_t;
 
 

@@ -55,7 +55,7 @@
 #define EXPERIMENT_META_FILE_NAME       "/experiment_metadata.bin"
 #define EXPERIMENT_DATA_FILE_NAME       "/experiment.bin"
 
-#define PAYLOAD_MAX_ACK_RETRIES 3
+#define PAYLOAD_MAX_ACK_RETRIES 10
 
 //-------------Typedefs and Enums-------------
 typedef enum{
